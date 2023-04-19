@@ -57,9 +57,6 @@ event = {
 
 def main():
     setup_logging()
-    print(os.environ['STAGE'])
-
-    return
 
     logging.info('START!!!')
 

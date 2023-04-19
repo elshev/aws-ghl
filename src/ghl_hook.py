@@ -10,7 +10,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 s3 = boto3.client('s3')
 
-API_TOKEN = 'a85a5fbd77a3e4c0491a39b57f0899c464959c8c'
+ACCESS_TOKEN = os.environ['GHL_ACCESS_TOKEN']
 
 def time_to_str(date_time):
     if not isinstance(date_time, datetime.date):
@@ -70,7 +70,7 @@ def ghl_request(path):
     url = hostname + path
     common_headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {API_TOKEN}',
+        'Authorization': f'Bearer {ACCESS_TOKEN}',
         'Version': '2021-04-15'
     }
 
