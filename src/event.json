@@ -1,0 +1,77 @@
+{
+    "resource": "/gohighlevel",
+    "path": "/gohighlevel",
+    "httpMethod": "POST",
+    "headers": {
+        "Accept": "application/json, text/plain, *",
+        "Content-Type": "application/json;charset=utf-8",
+        "Host": "sxmz4whd3h.execute-api.us-east-1.amazonaws.com",
+        "User-Agent": "axios/0.21.1",
+        "X-Amzn-Trace-Id": "Root=1-643d5208-6546698a60a4127319760a5a",
+        "X-Forwarded-For": "34.171.142.15",
+        "X-Forwarded-Port": "443",
+        "X-Forwarded-Proto": "https"
+    },
+    "multiValueHeaders": {
+        "Accept": [
+            "application/json, text/plain, *"
+        ],
+        "Content-Type": [
+            "application/json;charset=utf-8"
+        ],
+        "Host": [
+            "sxmz4whd3h.execute-api.us-east-1.amazonaws.com"
+        ],
+        "User-Agent": [
+            "axios/0.21.1"
+        ],
+        "X-Amzn-Trace-Id": [
+            "Root=1-643d5208-6546698a60a4127319760a5a"
+        ],
+        "X-Forwarded-For": [
+            "34.171.142.15"
+        ],
+        "X-Forwarded-Port": [
+            "443"
+        ],
+        "X-Forwarded-Proto": [
+            "https"
+        ]
+    },
+    "queryStringParameters": "None",
+    "multiValueQueryStringParameters": "None",
+    "pathParameters": "None",
+    "stageVariables": "None",
+    "requestContext": {
+        "resourceId": "5lllcr",
+        "resourcePath": "/gohighlevel",
+        "httpMethod": "POST",
+        "extendedRequestId": "DhnBbHvEoAMFuLw=",
+        "requestTime": "17/Apr/2023: 14: 04: 56 +0000",
+        "path": "/dev/gohighlevel",
+        "accountId": "489440259680",
+        "protocol": "HTTP/1.1",
+        "stage": "dev",
+        "domainPrefix": "sxmz4whd3h",
+        "requestTimeEpoch": 1681740296849,
+        "requestId": "df1b63e9-cda3-41b5-84bd-47066177a9f0",
+        "identity": {
+            "cognitoIdentityPoolId": "None",
+            "accountId": "None",
+            "cognitoIdentityId": "None",
+            "caller": "None",
+            "sourceIp": "34.171.142.15",
+            "principalOrgId": "None",
+            "accessKey": "None",
+            "cognitoAuthenticationType": "None",
+            "cognitoAuthenticationProvider": "None",
+            "userArn": "None",
+            "userAgent": "axios/0.21.1",
+            "user": "None"
+        },
+        "domainName": "sxmz4whd3h.execute-api.us-east-1.amazonaws.com",
+        "apiId": "sxmz4whd3h"
+    },
+    "body": '{"type": "ContactCreate", "locationId": "dFUlfpB0VzwguRGR3IB3", "id": "amTSTG2BaQcCyIaL0Non", "country": "US", "dateAdded": "2023-04-17T14:04:56.278Z", "dnd": false, "email": "elshev@gmail.com", "firstName": "John", "lastName": "Testoff", "tags": [] }',
+     "isBase64Encoded": "False"
+}

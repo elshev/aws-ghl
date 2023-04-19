@@ -1,0 +1,10 @@
+[BASIC]
+good-names=a, b, c, d, e, f, h, i, j, k, l, m, n, p, q, r, s, x, y, z, A, B, C, H, K, L, N, P, Q, R, S, X, Y, Z, ex
+
+[FORMAT]
+max-line-length=160
+
+[MASTER]
+disable=
+    C0114, # missing-module-docstring
+    C0116, # missing-function-docstring
