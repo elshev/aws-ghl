@@ -3,7 +3,8 @@ from datetime import datetime
 import json
 import logging
 import logging.config
-from ghl_hook import lambda_handler
+import ghl_refresh_token
+import ghl_hook
 
 
 CONFIG_DIR = './config'
@@ -63,7 +64,8 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    lambda_handler(event, None)
+    #ghl_hook.lambda_handler(event, None)
+    ghl_refresh_token.lambda_handler(event, None)
 
     logging.info('FINISH!!!')
 

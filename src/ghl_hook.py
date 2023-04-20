@@ -9,6 +9,8 @@ from botocore.exceptions import ClientError
 GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
 GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
 
+GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 s3_client = boto3.client('s3')
@@ -98,13 +100,8 @@ def get_access_token():
     return get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
 
 
-def get_refresh_token():
-    return get_parameter('GHL_REFRESH_TOKEN', GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME)
-
-
 def ghl_request(path):
-    hostname = 'https://services.leadconnectorhq.com'
-    url = hostname + path
+    url = GHL_HOSTNAME + path
     access_token = get_access_token()
     common_headers = {
         'Content-Type': 'application/json',
@@ -116,14 +113,16 @@ def ghl_request(path):
     http = urllib3.PoolManager(headers=common_headers)
 
     response = http.request("GET", url)
-    response_body = response.data
-    logger.info(response_body)
+    data = json.loads(response.data)
     result = {
         'status': response.status,
         'reason': response.reason,
-        'body': response_body
+        'body': data
     }
     logger.info('Response:\n %s', result)
+
+    status_code = data['statusCode']
+    logger.info('Status Code: %s', status_code)
 
     return result
 
