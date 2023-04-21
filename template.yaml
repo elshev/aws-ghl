@@ -1,35 +1,107 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  Template for GoHighLevel<->AWS integration
+Description: Template for GoHighLevel<->AWS integration
 
 Parameters:
-  Stage:
+  StageName:
     Type: String
     Default: dev
+    AllowedValues:
+    - dev
+    - prod
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 120
     MemorySize: 128
 
 Resources:
+  GhlLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      - arn:aws:iam::aws:policy/AWSLambdaExecute
+      - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: GhlLambdaLogs
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            - logs:DescribeLogStreams
+            Resource:
+            - arn:aws:logs:*:*:*
+      - PolicyName: GhlLambdaS3
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Sid: S3Object
+            Effect: Allow
+            Action:
+            - s3:DeleteObjectTagging
+            - s3:GetObjectRetention
+            - s3:DeleteObjectVersion
+            - s3:GetObjectAttributes
+            - s3:PutObjectVersionTagging
+            - s3:DeleteObjectVersionTagging
+            - s3:PutObjectLegalHold
+            - s3:PutObject
+            - s3:GetObjectAcl
+            - s3:GetObject
+            - s3:PutObjectRetention
+            - s3:GetObjectTagging
+            - s3:PutObjectTagging
+            - s3:DeleteObject
+            - s3:GetObjectVersion
+            Resource:
+            - arn:aws:s3:::*/*
+          - Sid: S3Bucket
+            Effect: Allow
+            Action:
+            - s3:PutBucketTagging
+            - s3:GetBucketLogging
+            - s3:ListBucket
+            - s3:GetBucketLocation
+            - s3:GetBucketPolicy
+            Resource:
+            - arn:aws:s3:::*
+  # Reference this one to overwrite implicit stage
+  # https://github.com/aws/serverless-application-model/issues/191#issuecomment-580412747 
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: gohighlevel
+      StageName: !Ref StageName
   GhlRefreshTokenFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: src/
       Handler: ghl_refresh_token.lambda_handler
       Runtime: python3.9
+      Role: !GetAtt GhlLambdaRole.Arn
       Description: Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store
       Architectures:
       - x86_64
       Events:
-        GhlRefreshTokenEveryDay:
+        GhlRefreshTokenSchedule:
           Type: Schedule
           Properties:
             Schedule: 'rate(23 hours)'
-            Name: GhlRefreshTokenEveryDay
+            Name: GhlRefreshTokenSchedule
             Description: A schedule for getting new Access and Rerfresh Tokens from GoHighLevel
             Enabled: true
   GhlHookFunction:
@@ -38,6 +110,7 @@ Resources:
       CodeUri: src/
       Handler: ghl_hook.lambda_handler
       Runtime: python3.9
+      Role: !GetAtt GhlLambdaRole.Arn
       Architectures:
       - x86_64
       Events:
@@ -46,7 +119,7 @@ Resources:
           Properties:
             Path: /gohighlevel
             Method: post
-            Stage: !Ref Stage
+            RestApiId: !Ref RestApi
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -66,17 +139,17 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   GoHighLevelApi:
-    Description: API Gateway endpoint URL for Dev stage for GhlHook function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/gohighlevel/"
+    Description: API Gateway endpoint URL for GhlHook function
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/gohighlevel/"
   GhlRefreshTokenFunction:
     Description: GhlRefreshToken Lambda Function ARN
     Value: !GetAtt GhlRefreshTokenFunction.Arn
   GhlRefreshTokenFunctionIamRole:
-    Description: Implicit IAM Role created for GhlHook function
-    Value: !GetAtt GhlRefreshTokenFunctionRole.Arn
+    Description: IAM Role for GhlHook function
+    Value: !GetAtt GhlLambdaRole.Arn
   GhlHookFunction:
     Description: GhlHook Lambda Function ARN
     Value: !GetAtt GhlHookFunction.Arn
   GhlHookFunctionIamRole:
-    Description: Implicit IAM Role created for GhlHook function
-    Value: !GetAtt GhlHookFunctionRole.Arn
+    Description: IAM Role for GhlHook function
+    Value: !GetAtt GhlLambdaRole.Arn

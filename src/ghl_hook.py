@@ -147,4 +147,3 @@ def lambda_handler(event, context):
     ghl_request(api_path)
 
     write_to_s3(content)
-
