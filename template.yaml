@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Template for GoHighLevel<->AWS integration
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 128
+
+Resources:
+  GhlRefreshTokenFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/
+      Handler: ghl_refresh_token.lambda_handler
+      Runtime: python3.9
+      Description: Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store
+      Architectures:
+      - x86_64
+      Events:
+        GhlRefreshTokenEveryDay:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(23 hours)'
+            Name: GhlRefreshTokenEveryDay
+            Description: A schedule for getting new Access and Rerfresh Tokens from GoHighLevel
+            Enabled: true
+  GhlHookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: ghl_hook.lambda_handler
+      Runtime: python3.9
+      Architectures:
+      - x86_64
+      Events:
+        GoHighLevel:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /gohighlevel
+            Method: post
+            Stage: !Ref Stage
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  GoHighLevelApi:
+    Description: API Gateway endpoint URL for Dev stage for GhlHook function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/gohighlevel/"
+  GhlRefreshTokenFunction:
+    Description: GhlRefreshToken Lambda Function ARN
+    Value: !GetAtt GhlRefreshTokenFunction.Arn
+  GhlRefreshTokenFunctionIamRole:
+    Description: Implicit IAM Role created for GhlHook function
+    Value: !GetAtt GhlRefreshTokenFunctionRole.Arn
+  GhlHookFunction:
+    Description: GhlHook Lambda Function ARN
+    Value: !GetAtt GhlHookFunction.Arn
+  GhlHookFunctionIamRole:
+    Description: Implicit IAM Role created for GhlHook function
+    Value: !GetAtt GhlHookFunctionRole.Arn
