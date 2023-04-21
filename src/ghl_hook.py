@@ -121,9 +121,6 @@ def ghl_request(path):
     }
     logger.info('Response:\n %s', result)
 
-    status_code = data['statusCode']
-    logger.info('Status Code: %s', status_code)
-
     return result
 
 

@@ -64,8 +64,8 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    #ghl_hook.lambda_handler(event, None)
-    ghl_refresh_token.lambda_handler(event, None)
+    ghl_hook.lambda_handler(event, None)
+    #ghl_refresh_token.lambda_handler(event, None)
 
     logging.info('FINISH!!!')
 
