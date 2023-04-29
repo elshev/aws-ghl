@@ -35,6 +35,6 @@ aws-ghl Dev Setup
   * Select `Python 3.9`
   * Open new Terminal window in VSCode. You should seee (.venv) prompt
 * AWS CDK
-  * Open a terminal window in root
+  * Open a terminal window in the root project folder
   * Install AWS CDK: `python -m pip install aws-cdk-lib`
   * Bootstrap: `cdk bootstrap`
