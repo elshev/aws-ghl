@@ -19,8 +19,8 @@ class GoHighLevelStack(Stack):
     def python_runtime(self):
         return self._python_runtime
 
-    def __init__(self, scope: Construct, id: str, stage: str, **kwargs) -> None:
-        super().__init__(scope, id, **kwargs)
+    def __init__(self, scope: Construct, construct_id: str, stage: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
 
         self._python_runtime = _lambda.Runtime.PYTHON_3_9
 
@@ -29,12 +29,9 @@ class GoHighLevelStack(Stack):
             self, "GhlLambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AWSLambdaRole"),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AWSLambdaExecute"),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AmazonSSMFullAccess")
+                iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaExecute"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMFullAccess")
             ]
         )
 
