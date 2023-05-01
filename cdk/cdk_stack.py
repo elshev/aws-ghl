@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_lambda as _lambda,
     aws_events as events,
+    aws_events_targets as event_targets,
     aws_apigateway as apigw,
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
@@ -108,9 +109,8 @@ class GoHighLevelStack(Stack):
             timeout=Duration.seconds(180),
             description="Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store",
             architecture=_lambda.Architecture.X86_64,
-            # events=[refresh_token_schedule_rule],
         )
-        # ghl_refresh_token_function.add_event_source(refresh_token_schedule_rule)
+        refresh_token_schedule_rule.add_target(event_targets.LambdaFunction(ghl_refresh_token_function))
 
 
         # Create the Lambda function as a WebHook for Conversation Unread event
