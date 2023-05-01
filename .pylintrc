@@ -1,10 +1,11 @@
 [BASIC]
-good-names=a, b, c, d, e, f, h, i, j, k, l, m, n, p, q, r, s, x, y, z, A, B, C, H, K, L, N, P, Q, R, S, X, Y, Z, ex
+good-names=a, b, c, d, e, f, h, i, j, k, l, m, n, p, q, r, s, x, y, z, A, B, C, H, K, L, N, P, Q, R, S, X, Y, Z, ex, id
 
 [FORMAT]
-max-line-length=160
+max-line-length=255
 
 [MASTER]
 disable=
     C0114, # missing-module-docstring
+    C0115, # missing-class-docstring
     C0116, # missing-function-docstring
