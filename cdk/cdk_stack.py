@@ -2,7 +2,6 @@ from constructs import Construct
 from aws_cdk import (
     CfnOutput,
     Duration,
-    Fn,
     Stack,
     aws_iam as iam,
     aws_lambda as _lambda,
@@ -29,7 +28,7 @@ class GoHighLevelStack(Stack):
             self, "GhlLambdaRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaRole"),
+                iam.ManagedPolicy.from_managed_policy_arn(scope=self, id='LambdaRole', managed_policy_arn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'),
                 iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaExecute"),
                 iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMFullAccess")
             ]
@@ -142,8 +141,8 @@ class GoHighLevelStack(Stack):
 
         # Resource group
         app_resource_group = rg.CfnGroup(
-            self, 'ApplicationResourceGroup',
-            name=Fn.sub(f'ApplicationInsights-SAM-${Stack.stack_name}'),
+            self, 'applicationResourceGroup',
+            name=f'{construct_id}-ApplicationInsights',
         )
 
         # Application Insights monitoring
@@ -156,7 +155,7 @@ class GoHighLevelStack(Stack):
         # Outputs
         CfnOutput(
             self, 'GoHighLevelApiUrl',
-            value=ghl_api.url_for_path(f'/${stage}'),
+            value=ghl_api.url_for_path('/'),
             description='API Gateway endpoint URL for GhlHook function'
         )
 
