@@ -130,3 +130,7 @@ dmypy.json
 
 # AWS Tools
 .aws-sam/
+
+# CDK Context & Staging files
+.cdk.staging/
+cdk.out/

@@ -109,9 +109,9 @@ class GoHighLevelStack(Stack):
             timeout=Duration.seconds(180),
             description="Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store",
             architecture=_lambda.Architecture.X86_64,
-            events={refresh_token_schedule_rule},
+            # events=[refresh_token_schedule_rule],
         )
-        # refresh_token_function.add_event_source(event_rule)
+        # ghl_refresh_token_function.add_event_source(refresh_token_schedule_rule)
 
 
         # Create the Lambda function as a WebHook for Conversation Unread event
@@ -155,31 +155,31 @@ class GoHighLevelStack(Stack):
 
         # Outputs
         CfnOutput(
-            self, 'GoHighLevelApi',
+            self, 'GoHighLevelApiUrl',
             value=ghl_api.url_for_path(f'/${stage}'),
             description='API Gateway endpoint URL for GhlHook function'
         )
 
         CfnOutput(
-            self, 'GhlRefreshTokenFunction',
+            self, 'GhlRefreshTokenFunctionArn',
             value=ghl_refresh_token_function.function_arn,
             description='GhlRefreshToken Lambda Function ARN'
         )
 
         CfnOutput(
-            self, 'GhlRefreshTokenFunctionIamRole',
+            self, 'GhlRefreshTokenFunctionIamRoleArn',
             value=ghl_refresh_token_function.role.role_arn,
             description='IAM Role for GhlHook function'
         )
 
         CfnOutput(
-            self, 'GhlHookFunction',
+            self, 'GhlHookFunctionArn',
             value=ghl_hook_function.function_arn,
             description='GhlHook Lambda Function ARN'
         )
 
         CfnOutput(
-            self, 'GhlHookFunctionIamRole',
+            self, 'GhlHookFunctionIamRoleArn',
             value=ghl_hook_function.role.role_arn,
             description='IAM Role for GhlHook function'
         )
