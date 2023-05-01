@@ -1,5 +1,8 @@
 from constructs import Construct
 from aws_cdk import (
+    CfnOutput,
+    Duration,
+    Fn,
     Stack,
     aws_iam as iam,
     aws_lambda as _lambda,
@@ -7,8 +10,6 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
-    Duration,
-    Fn
 )
 
 
@@ -102,7 +103,7 @@ class GoHighLevelStack(Stack):
         )
 
         # Create the Lambda function for refreshing Access and Refresh tokens
-        _lambda.Function(
+        ghl_refresh_token_function = _lambda.Function(
             self, "GhlRefreshTokenFunction",
             code=_lambda.Code.from_asset("src"),
             handler="ghl_refresh_token.lambda_handler",
@@ -153,4 +154,35 @@ class GoHighLevelStack(Stack):
             self, 'ApplicationInsightsMonitoring',
             resource_group_name=app_resource_group.name,
             auto_configuration_enabled=True
+        )
+
+        # Outputs
+        CfnOutput(
+            self, 'GoHighLevelApi',
+            value=ghl_api.url_for_path(f'/${stage}'),
+            description='API Gateway endpoint URL for GhlHook function'
+        )
+
+        CfnOutput(
+            self, 'GhlRefreshTokenFunction',
+            value=ghl_refresh_token_function.function_arn,
+            description='GhlRefreshToken Lambda Function ARN'
+        )
+
+        CfnOutput(
+            self, 'GhlRefreshTokenFunctionIamRole',
+            value=ghl_refresh_token_function.role.role_arn,
+            description='IAM Role for GhlHook function'
+        )
+
+        CfnOutput(
+            self, 'GhlHookFunction',
+            value=ghl_hook_function.function_arn,
+            description='GhlHook Lambda Function ARN'
+        )
+
+        CfnOutput(
+            self, 'GhlHookFunctionIamRole',
+            value=ghl_hook_function.role.role_arn,
+            description='IAM Role for GhlHook function'
         )
