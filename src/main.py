@@ -56,6 +56,16 @@ ghlEvent = {
     'isBase64Encoded': False
 }
 
+conversationUnreadUpdateBody = {
+    "type": "ConversationUnreadUpdate",
+    "locationId": "dFUlfpB0VzwguRGR3IB3",
+    "id": "VH12UQXitFFdkA7tC6wX",
+    "contactId": "X1PraMGEWrprg9GoJAZp",
+    "deleted": False,
+    "inbox": True,
+    "unreadCount": 0
+}
+
 def main():
     setup_logging()
 
@@ -64,16 +74,7 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    # event_obj = event_to_dataclass(conversation_unread_update_event)
-    # event_obj = event_to_dataclass(ghlEventBody)
-    event_obj = ghl_hook.event_to_dataclass({'typ': 'aaa'})
-    if event_obj:
-        print(f'Event Type = {event_obj.type}')
-    else:
-        print('Unknown event type')
-
-
-    # ghl_hook.lambda_handler(event, None)
+    ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
 
     logging.info('FINISH!!!')

@@ -3,10 +3,11 @@ import datetime
 import logging
 import json
 import os
-from dataclasses import dataclass
 import boto3
 import urllib3
 from botocore.exceptions import ClientError
+
+from ConversationUnreadUpdate import ConversationUnreadUpdate
 
 GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
 GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
@@ -16,7 +17,6 @@ GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 s3_client = boto3.client('s3')
-ssm_client = boto3.client('ssm')
 
 def time_to_str(date_time):
     if not isinstance(date_time, datetime.date):
@@ -72,58 +72,38 @@ def write_to_s3(data):
     return True
 
 
-def get_ssm_parameter(name):
-    parameter = ssm_client.get_parameter(Name=name)
-    return parameter['Parameter']['Value']
+
+class AwsSsmClient:
+
+    def __init__(self) -> None:
+        self._ssm_client = boto3.client('ssm')
 
 
-def update_ssm_parameter(name, value):
-    ssm_client.put_parameter(
-        Name=name,
-        Overwrite=True,
-        Value=value,
-    )
+    def get_ssm_parameter(self, name):
+        parameter = self._ssm_client.get_parameter(Name=name)
+        return parameter['Parameter']['Value']
 
 
-def get_parameter(env_name, env_ssm_parameter_name):
-    '''
-    If 'env_name' exists in environment variables, returns its value
-    Otherwise, goes to SSM Parameter Store and returns value for parameter with name = env_ssm_parameter_name
-    '''
-    result = ''
-    if env_name in os.environ:
-        result = os.environ[env_name]
-    if result is None or result == '':
-        result = get_ssm_parameter(env_ssm_parameter_name)
-    return result
+    def update_ssm_parameter(self, name, value):
+        self._ssm_client.put_parameter(
+            Name=name,
+            Overwrite=True,
+            Value=value,
+        )
 
 
-def get_access_token():
-    return get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
+    def get_parameter(self, env_name, env_ssm_parameter_name):
+        '''
+        If 'env_name' exists in environment variables, returns its value
+        Otherwise, goes to SSM Parameter Store and returns value for parameter with name = env_ssm_parameter_name
+        '''
+        result = ''
+        if env_name in os.environ:
+            result = os.environ[env_name]
+        if result is None or result == '':
+            result = self.get_ssm_parameter(env_ssm_parameter_name)
+        return result
 
-
-def ghl_request(path):
-    url = GHL_HOSTNAME + path
-    access_token = get_access_token()
-    common_headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {access_token}',
-        'Version': '2021-04-15'
-    }
-
-    logger.info('Making API Call to %s ...', url)
-    http = urllib3.PoolManager(headers=common_headers)
-
-    response = http.request("GET", url)
-    data = json.loads(response.data)
-    result = {
-        'status': response.status,
-        'reason': response.reason,
-        'body': data
-    }
-    logger.info('Response:\n %s', result)
-
-    return result
 
 
 def get_body_from_event(event):
@@ -133,43 +113,41 @@ def get_body_from_event(event):
     body = json.loads(value) if isinstance(value, str) else value
     return body
 
-
-@dataclass
-class ConversationUnreadUpdate:
-    type: str
-    location_id: str
-    id: str
-    contact_id: str
-    deleted: str
-    inbox: str
-    unread_count: str
-
-    @staticmethod
-    def from_dict(event: Any) -> 'ConversationUnreadUpdate':
-        _type = str(event.get("type"))
-        _location_id = str(event.get("locationId"))
-        _id = str(event.get("id"))
-        _contact_id = str(event.get("contactId"))
-        _deleted = bool(event.get("deleted"))
-        _inbox = bool(event.get("inbox"))
-        _unread_count = int(event.get("unreadCount"))
-        return ConversationUnreadUpdate(_type, _location_id, _id, _contact_id, _deleted, _inbox, _unread_count)
+class ConversationRepository:
+    def __init__(self) -> None:
+        self._ssm_client = AwsSsmClient()
 
 
-def is_conversation_unread_update(event: Any):
-    if not isinstance(event, Mapping):
-        return False
-    event_type = str(event.get('type'))
-    return event_type == 'ConversationUnreadUpdate'
+    def get_access_token(self):
+        return self._ssm_client.get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
 
 
-def event_to_dataclass(event: Any):
-    result = None
-    if is_conversation_unread_update(event):
-        result = ConversationUnreadUpdate.from_dict(event)
-    return result
+    def ghl_request(self, path):
+        url = GHL_HOSTNAME + path
+        access_token = self.get_access_token()
+        common_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {access_token}',
+            'Version': '2021-04-15'
+        }
 
+        logger.info('Making API Call to %s ...', url)
+        http = urllib3.PoolManager(headers=common_headers)
 
+        response = http.request("GET", url)
+        data = json.loads(response.data)
+        result = {
+            'status': response.status,
+            'reason': response.reason,
+            'body': data
+        }
+        logger.info('Response:\n %s', result)
+
+        return result
+    
+    def get_by_id(self, conversation_id):
+        api_path = f'/conversations/{conversation_id}'
+        return self.ghl_request(api_path)
 
 
 def lambda_handler(event, context):
@@ -177,10 +155,14 @@ def lambda_handler(event, context):
     if not context is None:
         logger.info('Context: %s', context)
     body = get_body_from_event(event)
-    content = json.dumps(body)
-    logger.info('Content: %s', content)
+    if body != event:
+        logger.info('Content: %s', body)
 
-    api_path = '/conversations/9325cLcgqmhJVyfITS7g'
-    ghl_request(api_path)
+    conversation_unread_update = ConversationUnreadUpdate.from_dict(body)
+    logger.info(conversation_unread_update)
 
-    write_to_s3(content)
+    conversation_repository = ConversationRepository()
+    conversation_repository.get_by_id(conversation_unread_update.id)
+
+    # write_to_s3(content)
+

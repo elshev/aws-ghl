@@ -1,7 +1,6 @@
 import json
 from ghl_hook import (
-    get_body_from_event,
-    is_conversation_unread_update
+    get_body_from_event
 )
 
 BODY_KEY = 'body'
@@ -16,16 +15,6 @@ contactCreateBody = {
         'firstName': 'John',
         'lastName': 'Testoff'
     }
-
-conversationUnreadUpdateBody = {
-    "type": "ConversationUnreadUpdate",
-    "locationId": "dFUlfpB0VzwguRGR3IB3",
-    "id": "VH12UQXitFFdkA7tC6wX",
-    "contactId": "X1PraMGEWrprg9GoJAZp",
-    "deleted": False,
-    "inbox": True,
-    "unreadCount": 0
-}
 
 apiEvent = {
         'resource': '/gohighlevel',
@@ -46,28 +35,6 @@ apiEvent = {
         BODY_KEY: contactCreateBody,
         'isBase64Encoded': False
     }
-
-
-class TestIsConversationUnreadUpdate():
-    """
-    Tests the is_conversation_unread_update() function
-    """
-
-    def test_returns_proper_result(self):
-        """
-        Tests that the is_conversation_unread_update() function returns True for ConversationUnreadUpdate objects and false for others
-        For brevity sake, many tests are joined into one
-        """
-        # Arrange
-        # Act
-        #Assert
-        assert is_conversation_unread_update(None) is False
-        assert is_conversation_unread_update(10) is False
-        assert is_conversation_unread_update({}) is False
-        assert is_conversation_unread_update({'typ': 'ConversationUnreadUpdate'}) is False
-        assert is_conversation_unread_update(conversationUnreadUpdateBody) is True
-        assert is_conversation_unread_update({'type': 'ConversationUnreadUpdate'}) is True
-        assert is_conversation_unread_update({'firstKey': 'SomeValue', 'type': 'ConversationUnreadUpdate'}) is True
 
 
 class TestGetBodyFromEvent():
@@ -117,3 +84,4 @@ class TestGetBodyFromEvent():
 
         #Assert
         assert body == contactCreateBody
+
