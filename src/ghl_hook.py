@@ -4,15 +4,11 @@ import logging
 import json
 import os
 import boto3
-import urllib3
 from botocore.exceptions import ClientError
+from ConversationRepository import ConversationRepository
 
 from ConversationUnreadUpdate import ConversationUnreadUpdate
 
-GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
-GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
-
-GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -72,86 +68,6 @@ def write_to_s3(data):
     return True
 
 
-
-class AwsSsmClient:
-
-    def __init__(self) -> None:
-        self._ssm_client = boto3.client('ssm')
-
-
-    def get_ssm_parameter(self, name):
-        parameter = self._ssm_client.get_parameter(Name=name)
-        return parameter['Parameter']['Value']
-
-
-    def update_ssm_parameter(self, name, value):
-        self._ssm_client.put_parameter(
-            Name=name,
-            Overwrite=True,
-            Value=value,
-        )
-
-
-    def get_parameter(self, env_name, env_ssm_parameter_name):
-        '''
-        If 'env_name' exists in environment variables, returns its value
-        Otherwise, goes to SSM Parameter Store and returns value for parameter with name = env_ssm_parameter_name
-        '''
-        result = ''
-        if env_name in os.environ:
-            result = os.environ[env_name]
-        if result is None or result == '':
-            result = self.get_ssm_parameter(env_ssm_parameter_name)
-        return result
-
-
-
-class ConversationRepository:
-    @property
-    def location_id(self):
-        return self._location_id
-    
-    def __init__(self, location_id) -> None:
-        self._ssm_client = AwsSsmClient()
-        self._ghl_api_version = '2021-07-28'
-        self._location_id = location_id
-
-    def get_access_token(self):
-        return self._ssm_client.get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
-
-
-    def ghl_request(self, path):
-        url = GHL_HOSTNAME + path
-        access_token = self.get_access_token()
-        common_headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {access_token}',
-            'Version': '2021-04-15'
-        }
-
-        logger.info('Making API Call to %s ...', url)
-        http = urllib3.PoolManager(headers=common_headers)
-
-        response = http.request("GET", url)
-        data = json.loads(response.data)
-        result = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': data
-        }
-        logger.info('Response:\n %s', result)
-
-        return result
-    
-    def get_by_id(self, conversation_id):
-        api_path = f'/conversations/{conversation_id}'
-        return self.ghl_request(api_path)
-
-    def search_by_id(self, conversation_id):
-        api_path = f'/conversations/search?locationId={self.location_id}&Version={self._ghl_api_version}&id={conversation_id}'
-        return self.ghl_request(api_path)
-
-
 def get_body_from_event(event):
     value = event.get('body', None)
     if value is None:
@@ -174,7 +90,9 @@ def lambda_handler(event, context):
     location_id = conversation_unread_update.location_id
 
     conversation_repository = ConversationRepository(location_id)
-    conversation_repository.search_by_id(conversation_unread_update.id)
+    conversation = conversation_repository.search_by_id(conversation_unread_update.id)
+    logger.info('Search Conversation by ID result: \n%s', conversation)
 
     # write_to_s3(content)
+
 
