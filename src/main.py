@@ -26,7 +26,7 @@ def setup_logging():
     )
 
 
-eventBody = {
+ghlEventBody = {
     'type': 'ContactCreate',
     'locationId': 'locacion123',
     'id': 'id12345',
@@ -36,7 +36,7 @@ eventBody = {
     'lastName': 'Testoff'
 }
 
-event = {
+ghlEvent = {
     'resource': '/gohighlevel',
     'path': '/gohighlevel',
     'httpMethod': 'POST',
@@ -52,7 +52,7 @@ event = {
         'resourcePath': '/gohighlevel',
         'httpMethod': 'POST'
     },
-    'body': json.dumps(eventBody),
+    'body': json.dumps(ghlEventBody),
     'isBase64Encoded': False
 }
 
@@ -64,8 +64,17 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    ghl_hook.lambda_handler(event, None)
-    #ghl_refresh_token.lambda_handler(event, None)
+    # event_obj = event_to_dataclass(conversation_unread_update_event)
+    # event_obj = event_to_dataclass(ghlEventBody)
+    event_obj = ghl_hook.event_to_dataclass({'typ': 'aaa'})
+    if event_obj:
+        print(f'Event Type = {event_obj.type}')
+    else:
+        print('Unknown event type')
+
+
+    # ghl_hook.lambda_handler(event, None)
+    # ghl_refresh_token.lambda_handler(event, None)
 
     logging.info('FINISH!!!')
 

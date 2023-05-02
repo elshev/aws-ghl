@@ -1,12 +1,13 @@
 import json
-
-from ghl_hook import get_body_from_event
+from ghl_hook import (
+    get_body_from_event,
+    is_conversation_unread_update
+)
 
 BODY_KEY = 'body'
 
 
-def get_body():
-    return {
+contactCreateBody = {
         'type': 'ContactCreate',
         'locationId': 'locacion123',
         'id': 'id12345',
@@ -16,8 +17,17 @@ def get_body():
         'lastName': 'Testoff'
     }
 
-def get_event():
-    return {
+conversationUnreadUpdateBody = {
+    "type": "ConversationUnreadUpdate",
+    "locationId": "dFUlfpB0VzwguRGR3IB3",
+    "id": "VH12UQXitFFdkA7tC6wX",
+    "contactId": "X1PraMGEWrprg9GoJAZp",
+    "deleted": False,
+    "inbox": True,
+    "unreadCount": 0
+}
+
+apiEvent = {
         'resource': '/gohighlevel',
         'path': '/gohighlevel',
         'httpMethod': 'POST',
@@ -33,9 +43,31 @@ def get_event():
             'resourcePath': '/gohighlevel',
             'httpMethod': 'POST'
         },
-        BODY_KEY: get_body(),
+        BODY_KEY: contactCreateBody,
         'isBase64Encoded': False
     }
+
+
+class TestIsConversationUnreadUpdate():
+    """
+    Tests the is_conversation_unread_update() function
+    """
+
+    def test_returns_proper_result(self):
+        """
+        Tests that the is_conversation_unread_update() function returns True for ConversationUnreadUpdate objects and false for others
+        For brevity sake, many tests are joined into one
+        """
+        # Arrange
+        # Act
+        #Assert
+        assert is_conversation_unread_update(None) is False
+        assert is_conversation_unread_update(10) is False
+        assert is_conversation_unread_update({}) is False
+        assert is_conversation_unread_update({'typ': 'ConversationUnreadUpdate'}) is False
+        assert is_conversation_unread_update(conversationUnreadUpdateBody) is True
+        assert is_conversation_unread_update({'type': 'ConversationUnreadUpdate'}) is True
+        assert is_conversation_unread_update({'firstKey': 'SomeValue', 'type': 'ConversationUnreadUpdate'}) is True
 
 
 class TestGetBodyFromEvent():
@@ -48,7 +80,7 @@ class TestGetBodyFromEvent():
         Test that the get_body_from_event() function returns the whole 'event' object if 'event' doesn't contain 'body'
         """
         # Arrange
-        event = get_body()
+        event = contactCreateBody
 
         # Act
         body = get_body_from_event(event)
@@ -62,14 +94,14 @@ class TestGetBodyFromEvent():
         Test that the get_body_from_event() function returns 'event.body' when event.body is 'dict'
         """
         # Arrange
-        event = get_event()
-        event[BODY_KEY] = get_body()
+        event = apiEvent
+        event[BODY_KEY] = contactCreateBody
 
         # Act
         body = get_body_from_event(event)
 
         #Assert
-        assert body == get_body()
+        assert body == contactCreateBody
 
 
     def test_event_contains_body_as_string(self):
@@ -77,11 +109,11 @@ class TestGetBodyFromEvent():
         Test that the get_body_from_event() function returns 'event.body' when event.body is 'string'
         """
         # Arrange
-        event = get_event()
-        event[BODY_KEY] = json.dumps(get_body())
+        event = apiEvent
+        event[BODY_KEY] = json.dumps(contactCreateBody)
 
         # Act
         body = get_body_from_event(event)
 
         #Assert
-        assert body == get_body()
+        assert body == contactCreateBody
