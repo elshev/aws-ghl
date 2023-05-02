@@ -106,17 +106,15 @@ class AwsSsmClient:
 
 
 
-def get_body_from_event(event):
-    value = event.get('body', None)
-    if value is None:
-        value = event
-    body = json.loads(value) if isinstance(value, str) else value
-    return body
-
 class ConversationRepository:
-    def __init__(self) -> None:
+    @property
+    def location_id(self):
+        return self._location_id
+    
+    def __init__(self, location_id) -> None:
         self._ssm_client = AwsSsmClient()
-
+        self._ghl_api_version = '2021-07-28'
+        self._location_id = location_id
 
     def get_access_token(self):
         return self._ssm_client.get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
@@ -149,6 +147,18 @@ class ConversationRepository:
         api_path = f'/conversations/{conversation_id}'
         return self.ghl_request(api_path)
 
+    def search_by_id(self, conversation_id):
+        api_path = f'/conversations/search?locationId={self.location_id}&Version={self._ghl_api_version}&id={conversation_id}'
+        return self.ghl_request(api_path)
+
+
+def get_body_from_event(event):
+    value = event.get('body', None)
+    if value is None:
+        value = event
+    body = json.loads(value) if isinstance(value, str) else value
+    return body
+
 
 def lambda_handler(event, context):
     logger.info('Event: %s', event)
@@ -161,8 +171,10 @@ def lambda_handler(event, context):
     conversation_unread_update = ConversationUnreadUpdate.from_dict(body)
     logger.info(conversation_unread_update)
 
-    conversation_repository = ConversationRepository()
-    conversation_repository.get_by_id(conversation_unread_update.id)
+    location_id = conversation_unread_update.location_id
+
+    conversation_repository = ConversationRepository(location_id)
+    conversation_repository.search_by_id(conversation_unread_update.id)
 
     # write_to_s3(content)
 
