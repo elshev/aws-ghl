@@ -35,18 +35,20 @@ class ConversationRepository:
 
         response = http.request("GET", url)
         data = json.loads(response.data)
-        result = {
+
+        log_value = {
             'status': response.status,
             'reason': response.reason,
             'body': data
         }
+        self._logger.info('Response:\n%s ...', log_value)
 
-        return result
+        return data
 
     def get_by_id(self, conversation_id):
         api_path = f'/conversations/{conversation_id}'
         return self.ghl_request(api_path)
 
-    def search_by_id(self, conversation_id):
+    def search(self, conversation_id):
         api_path = f'/conversations/search?locationId={self.location_id}&Version={self._ghl_api_version}&id={conversation_id}'
         return self.ghl_request(api_path)

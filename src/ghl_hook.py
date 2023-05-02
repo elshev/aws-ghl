@@ -1,4 +1,3 @@
-from typing import Any, Mapping
 import logging
 import json
 from AwsS3Client import AwsS3Client
@@ -31,7 +30,7 @@ def lambda_handler(event, context):
     location_id = conversation_unread_update.location_id
 
     conversation_repository = ConversationRepository(location_id)
-    conversation = conversation_repository.search_by_id(conversation_unread_update.id)
+    conversation = conversation_repository.search(conversation_unread_update.id)
     logger.info('Search Conversation by ID result: \n%s', conversation)
 
     s3_client = AwsS3Client()
