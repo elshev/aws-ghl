@@ -4,6 +4,7 @@ import logging
 import os
 import boto3
 from botocore.exceptions import ClientError
+from AwsStsClient import AwsStsClient
 
 
 class AwsS3Client:
@@ -13,6 +14,7 @@ class AwsS3Client:
 
     def __init__(self) -> None:
         self._s3_client = boto3.client('s3')
+        self._aws_sts_client = AwsStsClient()
 
     @staticmethod
     def time_to_str(date_time = None):
@@ -48,12 +50,22 @@ class AwsS3Client:
             json.dump(data, f, ensure_ascii=False, indent=4)
         return lambda_path
 
-
     @staticmethod
     def get_s3_key_name():
         return f'{AwsS3Client.time_to_str()}.txt'
 
-
+    def check_s3_bucket(self, location_id):
+        aws_account_id = self._aws_sts_client.get_aws_account_id()
+        print(f'AWS Account ID = {aws_account_id}')
+        bucket_name = 'test-489440259680'
+        s3_resource = boto3.resource("s3")
+        bucket = s3_resource.Bucket(bucket_name)
+        bucket_exists = not bucket is None
+        if bucket_exists:
+            print(f'Bucket {bucket_name} exists!')
+        else:
+            print(f'Bucket {bucket_name} DOESNOT exist!')
+    
     def write_to_s3(self, data):
         key_name = AwsS3Client.get_s3_key_name()
         s3_path = f'{AwsS3Client.bucket_name}/{key_name}'

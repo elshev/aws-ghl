@@ -3,6 +3,8 @@ from datetime import datetime
 import json
 import logging
 import logging.config
+from AwsS3Client import AwsS3Client
+from AwsStsClient import AwsStsClient
 import ghl_refresh_token
 import ghl_hook
 
@@ -74,7 +76,9 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
+    s3_client = AwsS3Client()
+    s3_client.check_s3_bucket('abc123')
+    # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
 
     logging.info('FINISH!!!')
