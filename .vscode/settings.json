@@ -1,10 +1,11 @@
 {
     "python.formatting.provider": "autopep8",
     "python.analysis.extraPaths": [
-        "src"
+        "src",
+        "tests"
     ],
     "python.testing.pytestArgs": [
-        "src"
+        "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
