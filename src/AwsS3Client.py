@@ -4,12 +4,12 @@ import logging
 import os
 import boto3
 from botocore.exceptions import ClientError
+from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
 
 
 class AwsS3Client:
 
-    AWS_REGION = 'us-east-1'
     logger = logging.getLogger()
     _aws_sts_client = AwsStsClient()
     _aws_account_id = ''
@@ -68,6 +68,14 @@ class AwsS3Client:
         return f'ghl-{self.aws_account_id}-{location_id}'
 
     def check_bucket(self, location_id):
+        """Checks if a bucket for location_id exists. If not creates it
+
+        Args:
+            location_id (str): GoHighLevel Location ID
+
+        Returns:
+            str: Bucket Name.
+        """
         # try to get a bucket name from cache first
         bucket_name = None
         if location_id in AwsS3Client._bucket_cache:
@@ -81,8 +89,8 @@ class AwsS3Client:
             if bucket_resource.creation_date is None:
                 AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating...", bucket_name)
                 create_bucket_configuration = {}
-                if AwsS3Client.AWS_REGION != 'us-east-1':
-                    create_bucket_configuration['LocationConstraint'] = AwsS3Client.AWS_REGION
+                if AppConfig.aws_bucket_region != 'us-east-1':
+                    create_bucket_configuration['LocationConstraint'] = AppConfig.aws_bucket_region
                 if create_bucket_configuration:
                     self._s3_client.create_bucket(
                         Bucket=bucket_name,
@@ -95,9 +103,10 @@ class AwsS3Client:
             AwsS3Client._bucket_cache[location_id] = bucket_name
             return bucket_name
     
-    def write_to_s3(self, data):
+    def write_to_s3(self, location_id, data):
+        bucket_name = self.get_bucket_name_by_location(location_id)
         key_name = AwsS3Client.get_s3_key_name()
-        s3_path = f'{AwsS3Client.BUCKET_NAME}/{key_name}'
+        s3_path = f'{bucket_name}/{key_name}'
         tmp_file_path = AwsS3Client.data_to_tmp_file(data, key_name)
 
         AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
