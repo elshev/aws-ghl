@@ -9,10 +9,12 @@ from AwsStsClient import AwsStsClient
 
 class AwsS3Client:
 
-    BUCKET_NAME = 'test-489440259680'
+    AWS_REGION = 'us-east-1'
     logger = logging.getLogger()
     _aws_sts_client = AwsStsClient()
     _aws_account_id = ''
+    
+    # "location_id: bucket_name" pairs
     _bucket_cache = {}    
 
     @property
@@ -65,15 +67,27 @@ class AwsS3Client:
     def get_bucket_name_by_location(self, location_id):
         return f'ghl-{self.aws_account_id}-{location_id}'
 
-    def check_s3_bucket(self, location_id):
-        bucket_name = self.get_bucket_name_by_location(location_id)
-        s3_resource = boto3.resource("s3")
-        bucket = s3_resource.Bucket(bucket_name)
-        bucket_exists = not bucket is None
-        if bucket_exists:
-            print(f'Bucket {bucket_name} exists!')
-        else:
-            print(f'Bucket {bucket_name} DOES NOT exist!')
+    def check_bucket(self, location_id):
+        # try to get a bucket name from cache first
+        bucket_name = None
+        if location_id in AwsS3Client._bucket_cache:
+            bucket_name = AwsS3Client._bucket_cache[location_id]
+        #         
+        if not bucket_name:
+            bucket_name = self.get_bucket_name_by_location(location_id)
+            s3_resource = boto3.resource("s3")
+            bucket_resource = s3_resource.Bucket(bucket_name)
+            # Create bucket in S3 if doesn't exist
+            if bucket_resource is None:
+                AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating...", bucket_name)
+                s3_resource.create_bucket(
+                    Bucket=bucket_name, 
+                    CreateBucketConfiguration={'LocationConstraint': AwsS3Client.AWS_REGION}
+                )
+                AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
+            
+            AwsS3Client._bucket_cache[location_id] = bucket_name
+            return bucket_name
     
     def write_to_s3(self, data):
         key_name = AwsS3Client.get_s3_key_name()
