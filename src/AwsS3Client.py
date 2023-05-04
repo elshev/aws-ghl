@@ -78,12 +78,18 @@ class AwsS3Client:
             s3_resource = boto3.resource("s3")
             bucket_resource = s3_resource.Bucket(bucket_name)
             # Create bucket in S3 if doesn't exist
-            if bucket_resource is None:
+            if bucket_resource.creation_date is None:
                 AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating...", bucket_name)
-                s3_resource.create_bucket(
-                    Bucket=bucket_name, 
-                    CreateBucketConfiguration={'LocationConstraint': AwsS3Client.AWS_REGION}
-                )
+                create_bucket_configuration = {}
+                if AwsS3Client.AWS_REGION != 'us-east-1':
+                    create_bucket_configuration['LocationConstraint'] = AwsS3Client.AWS_REGION
+                if create_bucket_configuration:
+                    self._s3_client.create_bucket(
+                        Bucket=bucket_name,
+                        CreateBucketConfiguration=create_bucket_configuration
+                    )
+                else:
+                    self._s3_client.create_bucket(Bucket=bucket_name)
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
             AwsS3Client._bucket_cache[location_id] = bucket_name
