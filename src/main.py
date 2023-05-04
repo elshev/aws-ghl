@@ -77,7 +77,9 @@ def main():
     logging.info('CWD = %s', directory)
 
     s3_client = AwsS3Client()
-    s3_client.check_s3_bucket('abc123')
+    bucket_name = s3_client.get_bucket_name_by_location('abc123')
+    print(f'BucketName: {bucket_name}')
+    # s3_client.check_s3_bucket('abc123')
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
 
