@@ -28,10 +28,11 @@ def lambda_handler(event, context):
     logger.info(conversation_unread_update)
 
     location_id = conversation_unread_update.location_id
+    contact_id = conversation_unread_update.contact_id
 
     conversation_repository = ConversationRepository(location_id)
     conversation = conversation_repository.search(conversation_unread_update.id)
     logger.info('Search Conversation by ID result: \n%s', conversation)
 
     s3_client = AwsS3Client()
-    # s3_client.write_to_s3(conversation)
+    s3_client.write_to_s3(location_id, contact_id, conversation)

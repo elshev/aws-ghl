@@ -34,11 +34,11 @@ class AwsS3Client:
 
 
     @staticmethod
-    def get_tmp_file_path(file_name):
-        tmp_folder_path = '/tmp'
-        if not file_name.startswith(f'{tmp_folder_path}/'):
-            return f'/tmp/{file_name}'
-        return file_name
+    def get_tmp_file_path(relative_file_path):
+        tmp_folder_path = '/tmp/ghl'
+        if not relative_file_path.startswith(f'{tmp_folder_path}/'):
+            return f'{tmp_folder_path}/{relative_file_path}'
+        return relative_file_path
 
 
     @staticmethod
@@ -54,20 +54,17 @@ class AwsS3Client:
 
 
     @staticmethod
-    def data_to_tmp_file(data, file_name):
-        lambda_path = AwsS3Client.get_tmp_file_path(file_name)
-        with open(lambda_path, 'w', encoding='utf-8') as f:
+    def data_to_tmp_file(data, relative_file_path):
+        file_path = AwsS3Client.get_tmp_file_path(relative_file_path)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        return lambda_path
+        return file_path
 
-    @staticmethod
-    def get_s3_key_name():
-        return f'{AwsS3Client.time_to_str()}.txt'
+    def get_bucket_name_by_location(self, location_id: str):
+        return f'ghl-{self.aws_account_id}-{location_id.lower()}'
 
-    def get_bucket_name_by_location(self, location_id):
-        return f'ghl-{self.aws_account_id}-{location_id}'
-
-    def check_bucket(self, location_id):
+    def check_bucket(self, location_id: str):
         """Checks if a bucket for location_id exists. If not creates it
 
         Args:
@@ -89,8 +86,9 @@ class AwsS3Client:
             if bucket_resource.creation_date is None:
                 AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating...", bucket_name)
                 create_bucket_configuration = {}
-                if AppConfig.aws_bucket_region != 'us-east-1':
-                    create_bucket_configuration['LocationConstraint'] = AppConfig.aws_bucket_region
+                aws_bucket_region = AppConfig.get_aws_bucket_region()
+                if aws_bucket_region != 'us-east-1':
+                    create_bucket_configuration['LocationConstraint'] = aws_bucket_region
                 if create_bucket_configuration:
                     self._s3_client.create_bucket(
                         Bucket=bucket_name,
@@ -103,15 +101,20 @@ class AwsS3Client:
             AwsS3Client._bucket_cache[location_id] = bucket_name
             return bucket_name
     
-    def write_to_s3(self, location_id, data):
-        bucket_name = self.get_bucket_name_by_location(location_id)
-        key_name = AwsS3Client.get_s3_key_name()
+    @staticmethod
+    def get_object_key(contact_id: str):
+        dt = datetime.datetime.now()
+        return f'{contact_id}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.json'
+
+    def write_to_s3(self, location_id, contact_id, data):
+        bucket_name = self.check_bucket(location_id)
+        key_name = AwsS3Client.get_object_key(contact_id)
         s3_path = f'{bucket_name}/{key_name}'
         tmp_file_path = AwsS3Client.data_to_tmp_file(data, key_name)
 
         AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
         try:
-            response = self._s3_client.upload_file(tmp_file_path, AwsS3Client.BUCKET_NAME, key_name)
+            response = self._s3_client.upload_file(tmp_file_path, bucket_name, key_name)
         except ClientError as e:
             AwsS3Client.logger.error(e)
             return False
