@@ -137,10 +137,10 @@ def main():
     logging.info('CWD = %s', directory)
 
     start_date = datetime.utcnow().date() + timedelta(days=-1)
-    end_date = datetime.utcnow().date()
+    end_date = datetime.utcnow()
     mg_client = MgClient()
-    # mg_client.get_domains()
-    mg_client.get_events(begin_date=start_date, end_date=end_date)
+    messages = mg_client.get_messages(begin_date=start_date, end_date=end_date)
+    logging.info(json.dumps(messages, indent=2))
     
     # mg_get(message_key='BAABAAUUuvwGta7RJJ9Fy70BafdrjfXLYg==')
 
