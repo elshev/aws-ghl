@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import logging
 import logging.config
@@ -7,6 +7,7 @@ import requests
 from AppConfig import AppConfig
 from AwsS3Client import AwsS3Client
 from AwsStsClient import AwsStsClient
+from MgClient import MgClient
 import ghl_refresh_token
 import ghl_hook
 
@@ -14,8 +15,24 @@ import ghl_hook
 CONFIG_DIR = './config'
 LOG_DIR = './logs'
 
+import http.client
 
+httpclient_logger = logging.getLogger("http.client")
+
+def httpclient_logging_patch(level=logging.DEBUG):
+    """Enable HTTPConnection debug logging to the logging framework"""
+
+    def httpclient_log(*args):
+        httpclient_logger.log(level, " ".join(args))
+
+    # mask the print() built-in in the http.client module to use logging instead
+    http.client.print = httpclient_log
+    # enable debugging
+    http.client.HTTPConnection.debuglevel = 1
+    
 def setup_logging():
+    httpclient_logging_patch()
+    
     print(os.getcwd())
     log_configs = {'dev': 'logging.dev.ini', 'prod': 'logging.prod.ini'}
     config = log_configs.get(os.environ['STAGE'], log_configs['dev'])
@@ -96,7 +113,7 @@ def mg_get(message_key):
 
     mailgun_api_key = AppConfig.get_mailgun_api_key()
     output_file_path = f'{LOG_DIR}/message.eml' 
-    domain = 'send.dignamail.com'
+    domain = AppConfig.get_mailgun_domain()
     base_url = 'https://storage-us-east4.api.mailgun.net/v3'
     url = f'{base_url}/domains/{domain}/messages/{message_key}'
     # this will help us to get the raw MIME 
@@ -114,17 +131,23 @@ def mg_get(message_key):
 def main():
     setup_logging()
 
-    logging.info('START!!!')
+    logging.debug('START!!!')
 
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    mg_get(message_key='BAABAAUUuvwGta7RJJ9Fy70BafdrjfXLYg==')
+    start_date = datetime.utcnow().date() + timedelta(days=-1)
+    end_date = datetime.utcnow().date()
+    mg_client = MgClient()
+    # mg_client.get_domains()
+    mg_client.get_events(begin_date=start_date, end_date=end_date)
+    
+    # mg_get(message_key='BAABAAUUuvwGta7RJJ9Fy70BafdrjfXLYg==')
 
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
 
-    logging.info('FINISH!!!')
+    logging.debug('FINISH!!!')
 
 if __name__ == '__main__':
     main()
