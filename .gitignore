@@ -135,4 +135,5 @@ dmypy.json
 .cdk.staging/
 cdk.out/
 
-tmp
+tmp/
+logs/

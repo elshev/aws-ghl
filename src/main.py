@@ -17,7 +17,10 @@ LOG_DIR = './logs'
 httpclient_logger = logging.getLogger("http.client")
 
 def httpclient_logging_patch(level=logging.DEBUG):
-    """Enable HTTPConnection debug logging to the logging framework"""
+    """
+    Enable HTTPConnection debug logging to the logging framework
+    https://stackoverflow.com/questions/16337511/log-all-requests-from-the-python-requests-module
+    """
 
     def httpclient_log(*args):
         httpclient_logger.log(level, " ".join(args))
@@ -93,11 +96,16 @@ def main():
     logging.info('CWD = %s', directory)
 
     start_date = datetime.utcnow().date() + timedelta(days=-1)
-    end_date = datetime.utcnow()
     mg_client = MgClient()
-    messages = mg_client.get_messages(begin_date=start_date, end_date=end_date)
-    logging.info(json.dumps(messages, indent=2))
-    
+    messages = mg_client.get_messages(begin_date=start_date)
+
+    messages_json = json.dumps(messages, indent=2)
+    logging.info(messages_json)
+    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.json'
+    logging.info(f'Dumpping messages to the file: "{output_file_path}"')
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(messages_json)
+
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
 

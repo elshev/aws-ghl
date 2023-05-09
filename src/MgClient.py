@@ -1,6 +1,10 @@
 from enum import Enum
 import json
-from datetime import datetime, date
+from datetime import (
+    datetime,
+    date,
+    timedelta
+)
 import logging
 from urllib.parse import urlencode
 import urllib3
@@ -54,20 +58,21 @@ class MgClient:
         return common_headers
         
 
-    def get_events(self, begin_date, end_date, event_type=MgEventType.ACCEPTED, limit=300):
+    def get_events(self, begin_date, end_date=None, event_type=MgEventType.ACCEPTED, limit=300):
         logging.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
-        end_timestamp = MgClient._get_timestamp(end_date)
 
-        events_url = f'{self._mg_domain_url}/events'
         request_body = {
             'begin': begin_timestamp,
-            'end': end_timestamp,
             'event': event_type,
             'ascending': 'yes',
-            'limit': 300,
-            'pretty': 'yes',
+            'limit': limit
         }
+        if (end_date):
+            end_timestamp = MgClient._get_timestamp(end_date)
+            request_body['end'] = end_timestamp
+
+        events_url = f'{self._mg_domain_url}/events'
         body = urlencode(request_body)
         url = f'{events_url}?{body}'
         self._logger.info('get_events(): Making API Call to %s ...', events_url)
@@ -102,7 +107,7 @@ class MgClient:
         return data
         
 
-    def get_messages(self, begin_date, end_date):
+    def get_messages(self, begin_date, end_date=None):
         result = {}
         events = self.get_events(begin_date=begin_date, end_date=end_date)
         for item in events['items']:
