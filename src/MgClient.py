@@ -1,4 +1,5 @@
 from enum import Enum
+import inspect
 import json
 from datetime import (
     datetime,
@@ -95,6 +96,43 @@ class MgClient:
         self._logger.info('get_message(): Making API Call to %s ...', message_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=message_url)
+        data = json.loads(response.data)
+
+        log_value = {
+            'status': response.status,
+            'reason': response.reason,
+            'body': json.dumps(data, indent=2)
+        }
+        logging.debug('get_message(): Response:\n%s ...', log_value)
+
+        return data
+
+    def get_message_mime(self, message_url):
+        method_name = inspect.currentframe().f_code.co_name
+        logging.debug('%s(): URL = %s', method_name, message_url)
+
+        self._logger.info('%s(): Making API Call to %s ...', method_name, message_url)
+        headers = self.get_common_headers()
+        headers['Accept'] = 'message/rfc2822'
+        http = urllib3.PoolManager(headers=headers)
+        response = http.request('GET', url=message_url)
+        data = json.loads(response.data)
+
+        log_value = {
+            'status': response.status,
+            'reason': response.reason,
+            'body': json.dumps(data, indent=2)
+        }
+        logging.debug('%s(): Response:\n%s ...', method_name, log_value)
+
+        return response.data
+
+    def get_message_attachment(self, attachment_url):
+        logging.debug('get_message_attachment(): URL = %s', attachment_url)
+
+        self._logger.info('get_message_attachment(): Making API Call to %s ...', attachment_url)
+        http = urllib3.PoolManager(headers=self.get_common_headers())
+        response = http.request('GET', url=attachment_url)
         data = json.loads(response.data)
 
         log_value = {

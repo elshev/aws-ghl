@@ -87,6 +87,37 @@ conversationUnreadUpdateBody = {
     'unreadCount': 0
 }
 
+
+def get_messages(begin_date: None):
+    if not begin_date:
+        begin_date = datetime.utcnow().date()# + timedelta(days=-1)
+    mg_client = MgClient()
+    
+    messages = mg_client.get_messages(begin_date=begin_date)
+
+    messages_json = json.dumps(messages, indent=2)
+    logging.info(messages_json)
+    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.json'
+    logging.info(f'Dumpping messages to the file: "{output_file_path}"')
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(messages_json)
+
+
+def get_message_mime(message_url):
+    mg_client = MgClient()
+    data = mg_client.get_message_mime(message_url=message_url)
+    prefix = b'"body-mime":"'
+    prefix_index = data.find(prefix)
+    if prefix_index < 0:
+        logging.error('No "%s" found in the response data!')
+        return
+    body_mime_index = prefix_index + len(prefix)
+    body_mime = data[body_mime_index:-1]
+    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.mime'
+    logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
+    with open(output_file_path, 'wb') as output_file:
+        output_file.write(body_mime)
+        
 def main():
     setup_logging()
 
@@ -95,16 +126,9 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    start_date = datetime.utcnow().date() + timedelta(days=-1)
-    mg_client = MgClient()
-    messages = mg_client.get_messages(begin_date=start_date)
-
-    messages_json = json.dumps(messages, indent=2)
-    logging.info(messages_json)
-    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.json'
-    logging.info(f'Dumpping messages to the file: "{output_file_path}"')
-    with open(output_file_path, 'w') as output_file:
-        output_file.write(messages_json)
+    message_url='https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAAUClIpJD1mBTJFBUI8k9O1umS99Yw=='
+    get_message_mime(message_url=message_url)
+    # get_messages()
 
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
