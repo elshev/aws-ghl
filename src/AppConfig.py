@@ -19,7 +19,7 @@ class AppConfig:
 
     @staticmethod
     def get_temp_file_path(relative_file_path):
-        tmp_folder_path = AppConfig.get_temp_folder_path
+        tmp_folder_path = AppConfig.get_temp_folder_path()
         if not relative_file_path.startswith(f'{tmp_folder_path}/'):
             return f'{tmp_folder_path}/{relative_file_path}'
         return relative_file_path
