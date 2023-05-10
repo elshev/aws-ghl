@@ -34,7 +34,17 @@ class MgClient:
         result = result_date.timestamp()
         return result
 
+    def _log_response(self, response, message='Response:\n'):
+        data = json.loads(response.data)
 
+        log_value = {
+            'status': response.status,
+            'reason': response.reason,
+            'body': json.dumps(data, indent=2)
+        }
+        self._logger.debug('%s%s', message, log_value)
+    
+    
     def get_domains(self):
         domains_url = f'{self._mg_base_url}/domains'
         common_headers = urllib3.make_headers(basic_auth=f'api:{self._mg_api_key}')
@@ -43,16 +53,11 @@ class MgClient:
         http = urllib3.PoolManager(headers=common_headers)
 
         response = http.request('GET', url=domains_url)
-        data = json.loads(response.data)
+        self._log_response(response)
+        data_json = json.loads(response.data)
 
-        log_value = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': data
-        }
-        self._logger.debug('Response:\n%s ...', log_value)
+        return data_json
 
-        return data
     
     def get_common_headers(self):
         common_headers = urllib3.make_headers(basic_auth=f'api:{self._mg_api_key}')
@@ -60,13 +65,13 @@ class MgClient:
         return common_headers
         
 
-    def get_events(self, begin_date, end_date=None, event_type=MgEventType.ACCEPTED, limit=300):
+    def get_message_urls(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300):
         logging.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
             'begin': begin_timestamp,
-            'event': event_type,
+            'event': filter_event_type,
             'ascending': 'yes',
             'limit': limit
         }
@@ -80,16 +85,26 @@ class MgClient:
         self._logger.info('get_events(): Making API Call to %s ...', events_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=url)
-        data = json.loads(response.data)
+        #self._log_response(response)
+        data_json = json.loads(response.data)
 
-        log_value = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': data
-        }
-        logging.debug('Response:\n%s ...', log_value)
+        result = {}
+        events = data_json.get('items')
+        if not events:
+            return result
+        for event in events:
+            if event.get('event') != filter_event_type:
+                continue
+            storage = event.get('storage')
+            if not storage:
+                continue
+            message_key = storage['key']
+            message_url = storage['url']
+            if message_key and message_url:
+                result[message_key] = message_url
 
-        return data
+        self.logger.info('Message URLs:\n%s', json.dumps(result, indent=2))
+        return result
 
     def get_message(self, message_url):
         logging.debug('get_message(): URL = %s', message_url)
@@ -97,16 +112,10 @@ class MgClient:
         self._logger.info('get_message(): Making API Call to %s ...', message_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=message_url)
-        data = json.loads(response.data)
-
-        log_value = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': json.dumps(data, indent=2)
-        }
-        logging.debug('get_message(): Response:\n%s ...', log_value)
-
-        return data
+        self._log_response(response)
+        data_json = json.loads(response.data)
+        
+        return data_json
 
     def extract_mime_from_response_json(response):
         body_mime = response["body-mime"]
@@ -119,54 +128,33 @@ class MgClient:
         
 
     def get_message_mime(self, message_url):
-        method_name = inspect.currentframe().f_code.co_name
-        logging.debug('%s(): URL = %s', method_name, message_url)
+        logging.debug('URL = %s', message_url)
 
-        self._logger.info('%s(): Making API Call to %s ...', method_name, message_url)
+        self._logger.info('Making API Call to %s ...', message_url)
         headers = self.get_common_headers()
         headers['Accept'] = 'message/rfc2822'
         http = urllib3.PoolManager(headers=headers)
         response = http.request('GET', url=message_url)
-        data = json.loads(response.data)
+        data_json = json.loads(response.data)
 
-        log_value = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': json.dumps(data, indent=2)
-        }
-        logging.info('%s(): Response:\n%s ...', method_name, log_value)
-
-        mime = MgClient.extract_mime_from_response_json(data)
+        mime = MgClient.extract_mime_from_response_json(data_json)
         
         return mime
 
-    def get_message_attachment(self, attachment_url):
-        logging.debug('get_message_attachment(): URL = %s', attachment_url)
-
-        self._logger.info('get_message_attachment(): Making API Call to %s ...', attachment_url)
-        http = urllib3.PoolManager(headers=self.get_common_headers())
-        response = http.request('GET', url=attachment_url)
-        data = json.loads(response.data)
-
-        log_value = {
-            'status': response.status,
-            'reason': response.reason,
-            'body': json.dumps(data, indent=2)
-        }
-        logging.debug('get_message(): Response:\n%s ...', log_value)
-
-        return data
-        
-
     def get_messages(self, begin_date, end_date=None):
+        """Get Messages from MailGun for a period of time.
+
+        Args:
+            begin_date (date): start of period
+            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+
+        Returns:
+            dict: dictionary: "messageId": "Message JSON"
+            See https://documentation.mailgun.com/en/latest/api-sending.html#retrieving-stored-messages for details
+        """
         result = {}
-        events = self.get_events(begin_date=begin_date, end_date=end_date)
-        for item in events['items']:
-            event_type = item['event']
-            if (event_type != MgEventType.ACCEPTED):
-                continue
-            storage = item['storage']
-            message_url = storage['url']
+        message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
+        for message_url in message_urls.values():
             message = self.get_message(message_url=message_url)
             logging.debug(json.dumps(message, indent=2))
             message_id = message['Message-Id']

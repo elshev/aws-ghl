@@ -88,7 +88,7 @@ conversationUnreadUpdateBody = {
 }
 
 
-def get_messages(begin_date: None):
+def get_messages(begin_date=None):
     if not begin_date:
         begin_date = datetime.utcnow().date()# + timedelta(days=-1)
     mg_client = MgClient()
@@ -111,28 +111,6 @@ def get_message_mime(message_url):
     with open(output_file_path, 'w', newline='\n') as output_file:
         output_file.write(body_mime)
         
-def get_mime_message_to_file(url):
-    import requests
-    import re
-
-    api_key = AppConfig.get_mailgun_api_key()
-    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
-    headers = {"Accept": "message/rfc2822"}
-    r = requests.get(url, auth=("api", api_key), headers=headers)
-    if r.status_code == 200:
-        result_json = r.json()
-        body_mime = result_json["body-mime"]
-        # Workaround for MailGun bug: 'body-mime' contains mixed line endings '\n' and '\r\n'
-        # Replace single '\n' to '\r\n\' (but not '\n' in '\r\n')
-        pattern = '(?<!\\r)\\n'
-        replacement = '\r\n'
-        new_text = re.sub(pattern, replacement, body_mime)
-
-        with open(output_file_path, "w", newline='\n') as message:
-            message.write(new_text)
-    else:
-        print("Oops! Something went wrong: %s" % r.content)
-
 
 def main():
     setup_logging()
@@ -142,10 +120,13 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    message_url='https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAAUClIpJD1mBTJFBUI8k9O1umS99Yw=='
+    simple_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAAUClIpJD1mBTJFBUI8k9O1umS99Yw=='
+    image_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQXnBYIdw7zaAqhGtojzqVlAljyQZA=='
+    reply_with_image_attachment_url = 'https://storage-us-west1.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQUlwG92Py50ElpITJuKKR_LQV1AYQ=='
+    message_url = reply_with_image_attachment_url
     # get_mime_message_to_file(message_url)
-    get_message_mime(message_url=message_url)
-    # get_messages()
+    # get_message_mime(message_url=message_url)
+    get_messages()
 
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
