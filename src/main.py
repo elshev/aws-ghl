@@ -105,19 +105,35 @@ def get_messages(begin_date: None):
 
 def get_message_mime(message_url):
     mg_client = MgClient()
-    data = mg_client.get_message_mime(message_url=message_url)
-    prefix = b'"body-mime":"'
-    prefix_index = data.find(prefix)
-    if prefix_index < 0:
-        logging.error('No "%s" found in the response data!')
-        return
-    body_mime_index = prefix_index + len(prefix)
-    body_mime = data[body_mime_index:-1]
-    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.mime'
+    body_mime = mg_client.get_message_mime(message_url=message_url)
+    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
     logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
-    with open(output_file_path, 'wb') as output_file:
+    with open(output_file_path, 'w', newline='\n') as output_file:
         output_file.write(body_mime)
         
+def get_mime_message_to_file(url):
+    import requests
+    import re
+
+    api_key = AppConfig.get_mailgun_api_key()
+    output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
+    headers = {"Accept": "message/rfc2822"}
+    r = requests.get(url, auth=("api", api_key), headers=headers)
+    if r.status_code == 200:
+        result_json = r.json()
+        body_mime = result_json["body-mime"]
+        # Workaround for MailGun bug: 'body-mime' contains mixed line endings '\n' and '\r\n'
+        # Replace single '\n' to '\r\n\' (but not '\n' in '\r\n')
+        pattern = '(?<!\\r)\\n'
+        replacement = '\r\n'
+        new_text = re.sub(pattern, replacement, body_mime)
+
+        with open(output_file_path, "w", newline='\n') as message:
+            message.write(new_text)
+    else:
+        print("Oops! Something went wrong: %s" % r.content)
+
+
 def main():
     setup_logging()
 
@@ -127,6 +143,7 @@ def main():
     logging.info('CWD = %s', directory)
 
     message_url='https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAAUClIpJD1mBTJFBUI8k9O1umS99Yw=='
+    # get_mime_message_to_file(message_url)
     get_message_mime(message_url=message_url)
     # get_messages()
 

@@ -7,6 +7,7 @@ from datetime import (
     timedelta
 )
 import logging
+import re
 from urllib.parse import urlencode
 import urllib3
 from AppConfig import AppConfig
@@ -107,6 +108,16 @@ class MgClient:
 
         return data
 
+    def extract_mime_from_response_json(response):
+        body_mime = response["body-mime"]
+        # Workaround for MailGun bug: 'body-mime' contains mixed line endings '\n' and '\r\n'
+        # Replace single '\n' to '\r\n\' (but not '\n' in '\r\n')
+        pattern = '(?<!\\r)\\n'
+        replacement = '\r\n'
+        result = re.sub(pattern, replacement, body_mime)
+        return result
+        
+
     def get_message_mime(self, message_url):
         method_name = inspect.currentframe().f_code.co_name
         logging.debug('%s(): URL = %s', method_name, message_url)
@@ -123,9 +134,11 @@ class MgClient:
             'reason': response.reason,
             'body': json.dumps(data, indent=2)
         }
-        logging.debug('%s(): Response:\n%s ...', method_name, log_value)
+        logging.info('%s(): Response:\n%s ...', method_name, log_value)
 
-        return response.data
+        mime = MgClient.extract_mime_from_response_json(data)
+        
+        return mime
 
     def get_message_attachment(self, attachment_url):
         logging.debug('get_message_attachment(): URL = %s', attachment_url)
