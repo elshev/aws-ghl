@@ -34,16 +34,8 @@ class AwsS3Client:
 
 
     @staticmethod
-    def get_tmp_file_path(relative_file_path):
-        tmp_folder_path = '/tmp/ghl'
-        if not relative_file_path.startswith(f'{tmp_folder_path}/'):
-            return f'{tmp_folder_path}/{relative_file_path}'
-        return relative_file_path
-
-
-    @staticmethod
     def remove_tmp_file(file_name):
-        lambda_path = AwsS3Client.get_tmp_file_path(file_name)
+        lambda_path = AppConfig.get_tmp_file_path(file_name)
         try:
             if os.path.isfile(lambda_path):
                 os.remove(lambda_path)
@@ -55,7 +47,7 @@ class AwsS3Client:
 
     @staticmethod
     def data_to_tmp_file(data, relative_file_path):
-        file_path = AwsS3Client.get_tmp_file_path(relative_file_path)
+        file_path = AppConfig.get_tmp_file_path(relative_file_path)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
