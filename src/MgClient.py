@@ -65,7 +65,18 @@ class MgClient:
         return common_headers
         
 
-    def get_message_urls(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300):
+    def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300):
+        """Get Message Events from MailGun for a period of time.
+
+        Args:
+            begin_date (date): start of period
+            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+
+        Returns:
+            dict: dictionary: "eventId": "Event"
+            See https://documentation.mailgun.com/en/latest/api-events.html#events for details
+        """
+        
         logging.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
@@ -86,10 +97,27 @@ class MgClient:
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=url)
         #self._log_response(response)
-        data_json = json.loads(response.data)
+        events_json = json.loads(response.data)
+        
+        return events_json
+        
+
+    def get_message_urls(self, begin_date, end_date=None, limit=300):
+        """First calls get_events() to get Message Events from MailGun for a period of time.
+        Then extract message URLs from the events retrieved.
+
+        Args:
+            begin_date (date): start of period
+            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+
+        Returns:
+            dict: dictionary: "messageKey": "messageURL"
+        """
+        filter_event_type = MgEventType.ACCEPTED
+        events_json = self.get_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
 
         result = {}
-        events = data_json.get('items')
+        events = events_json.get('items')
         if not events:
             return result
         for event in events:
@@ -103,9 +131,10 @@ class MgClient:
             if message_key and message_url:
                 result[message_key] = message_url
 
-        self.logger.info('Message URLs:\n%s', json.dumps(result, indent=2))
+        self._logger.info('Message URLs:\n%s', json.dumps(result, indent=2))
         return result
 
+    
     def get_message(self, message_url):
         logging.debug('get_message(): URL = %s', message_url)
 
@@ -128,9 +157,7 @@ class MgClient:
         
 
     def get_message_mime(self, message_url):
-        logging.debug('URL = %s', message_url)
-
-        self._logger.info('Making API Call to %s ...', message_url)
+        self._logger.info('get_message_mime(): Making API Call to %s ...', message_url)
         headers = self.get_common_headers()
         headers['Accept'] = 'message/rfc2822'
         http = urllib3.PoolManager(headers=headers)
@@ -159,5 +186,27 @@ class MgClient:
             logging.debug(json.dumps(message, indent=2))
             message_id = message['Message-Id']
             result[message_id] = message
+        
+        return result
+
+
+    def get_messages_mime(self, begin_date, end_date=None):
+        """Get Messages from MailGun for a period of time in MIME format
+
+        Args:
+            begin_date (date): start of period
+            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+
+        Returns:
+            dict: dictionary: "messageUrl": "MIME string"
+            See https://documentation.mailgun.com/en/latest/api-sending.html#retrieving-stored-messages for details
+        """
+        result = {}
+        message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
+        for message_url in message_urls.values():
+            mime = self.get_message_mime(message_url=message_url)
+            result[message_url] = mime
+
+        # logging.debug(json.dumps(result, indent=2))
         
         return result

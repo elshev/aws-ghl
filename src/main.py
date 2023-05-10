@@ -112,6 +112,23 @@ def get_message_mime(message_url):
         output_file.write(body_mime)
         
 
+def get_messages_mime(begin_date=None):
+    if not begin_date:
+        begin_date = datetime.utcnow().date()# + timedelta(days=-1)
+    mg_client = MgClient()
+    
+    messages = mg_client.get_messages_mime(begin_date=begin_date)
+
+    # messages_json = json.dumps(messages, indent=2)
+    # logging.info(messages_json)
+    for message_url, message_mime in messages.items():
+        message_key = message_url.rsplit('/', 1)[-1]
+        output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-{message_key}.eml'
+        logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
+        with open(output_file_path, 'w', newline='\n') as output_file:
+            output_file.write(message_mime)
+
+
 def main():
     setup_logging()
 
@@ -126,7 +143,8 @@ def main():
     message_url = reply_with_image_attachment_url
     # get_mime_message_to_file(message_url)
     # get_message_mime(message_url=message_url)
-    get_messages()
+    # get_messages()
+    get_messages_mime()
 
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
