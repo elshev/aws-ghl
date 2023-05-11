@@ -58,16 +58,17 @@ class MgMessage:
         _date = str(obj.get("Date"))
         _body_mime = MgMessage.fix_body_mime(str(obj.get("body-mime")))
         return MgMessage(
-            _url,
-            _content_type,
-            _feedback_id,
-            _message_id,
-            _mime_version,
-            _reply_to,
-            _subject,
-            _to,
-            _x_mailgun_variables,
-            _sender, 
-            _recipients,
-            _date,
-            _body_mime)
+            url=_url,
+            content_type=_content_type,
+            feedback_id=_feedback_id,
+            message_id=_message_id,
+            mime_version=_mime_version,
+            reply_to=_reply_to,
+            subject=_subject,
+            to=_to,
+            x_mailgun_variables=_x_mailgun_variables,
+            sender=_sender,
+            recipients=_recipients,
+            date=_date,
+            body_mime=_body_mime
+        )

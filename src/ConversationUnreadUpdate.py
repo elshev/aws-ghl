@@ -26,7 +26,15 @@ class ConversationUnreadUpdate:
         _deleted = bool(event.get("deleted"))
         _inbox = bool(event.get("inbox"))
         _unread_count = int(event.get("unreadCount"))
-        return ConversationUnreadUpdate(_type, _location_id, _id, _contact_id, _deleted, _inbox, _unread_count)
+        return ConversationUnreadUpdate(
+            type=_type,
+            location_id=_location_id,
+            id=_id,
+            contact_id=_contact_id,
+            deleted=_deleted,
+            inbox=_inbox,
+            unread_count=_unread_count
+        )
     
     @staticmethod
     def is_conversation_unread_update(event: Any):
