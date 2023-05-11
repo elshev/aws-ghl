@@ -35,10 +35,7 @@ def save_message_as_mime(message_key: str, message_mime: str):
 
 def save_messages_as_mime(messages: Iterable[MgMessage]):
     for message in messages:
-        message_key = message.url.rsplit('/', 1)[-1]
-        message_mime = message.body_mime
-        
-        save_message_as_mime(message_key, message_mime)
+        save_message_as_mime(message.key, message.body_mime)
 
 
 def handler(event, context):
@@ -50,4 +47,5 @@ def handler(event, context):
     save_messages_as_mime(messages)
 
     s3_client = AwsS3Client()
-    # s3_client.write_to_s3(location_id, contact_id, conversation)
+    for message in messages:
+        s3_client.upload_message_to_s3(message)

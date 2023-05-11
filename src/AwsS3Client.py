@@ -1,4 +1,4 @@
-import datetime
+from datetime import date, datetime
 import json
 import logging
 import os
@@ -6,6 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
+from MgMessage import MgMessage
 
 
 class AwsS3Client:
@@ -28,8 +29,8 @@ class AwsS3Client:
 
     @staticmethod
     def time_to_str(date_time = None):
-        if not isinstance(date_time, datetime.date):
-            date_time = datetime.datetime.now()
+        if not isinstance(date_time, date):
+            date_time = datetime.now()
         return date_time.strftime('%Y%m%d-%H%M%S')
 
 
@@ -67,6 +68,8 @@ class AwsS3Client:
         """
         # try to get a bucket name from cache first
         bucket_name = None
+        if not location_id:
+            raise ValueError('Parameter "location_id" is not defined')
         if location_id in AwsS3Client._bucket_cache:
             bucket_name = AwsS3Client._bucket_cache[location_id]
         #         
@@ -91,16 +94,21 @@ class AwsS3Client:
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
             AwsS3Client._bucket_cache[location_id] = bucket_name
-            return bucket_name
+        return bucket_name
     
     @staticmethod
-    def get_object_key(contact_id: str):
-        dt = datetime.datetime.now()
+    def get_object_key_from_contact(contact_id: str):
+        dt = datetime.now()
         return f'{contact_id}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.json'
 
-    def write_to_s3(self, location_id, contact_id, data):
+    @staticmethod
+    def get_object_key_from_mg_message(message: MgMessage):
+        dt = datetime.fromtimestamp(message.timestamp)
+        return f'{message.recipient}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
+    
+    def upload_conversation_to_s3(self, location_id, contact_id, data):
         bucket_name = self.check_bucket(location_id)
-        key_name = AwsS3Client.get_object_key(contact_id)
+        key_name = AwsS3Client.get_object_key_from_contact(contact_id)
         s3_path = f'{bucket_name}/{key_name}'
         tmp_file_path = AwsS3Client.data_to_tmp_file(data, key_name)
 
@@ -112,6 +120,36 @@ class AwsS3Client:
             return False
         finally:
             AwsS3Client.remove_tmp_file(tmp_file_path)
+        AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
+        AwsS3Client.logger.info('Response: %s', response)
+        return True
+
+    def save_message_as_mime(message: MgMessage):
+        message_key = message.key.strip('=').lower()
+        output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S-%f")}-{message_key}.eml'
+        output_file_path = AppConfig.get_temp_file_path(output_file_name)
+        logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
+        with open(output_file_path, 'w', newline='\n') as output_file:
+            output_file.write(message.body_mime)
+        
+        return output_file_path
+        
+            
+    def upload_message_to_s3(self, message: MgMessage):
+        bucket_name = self.check_bucket(message.location_id)
+        key_name = AwsS3Client.get_object_key_from_mg_message(message=message)
+        s3_path = f'{bucket_name}/{key_name}'
+        tmp_file_path = AwsS3Client.save_message_as_mime(message=message)
+
+        AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
+        try:
+            response = self._s3_client.upload_file(tmp_file_path, bucket_name, key_name)
+        except ClientError as e:
+            AwsS3Client.logger.error(e)
+            return False
+        finally:
+            #AwsS3Client.remove_tmp_file(tmp_file_path)
+            pass
         AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
         AwsS3Client.logger.info('Response: %s', response)
         return True

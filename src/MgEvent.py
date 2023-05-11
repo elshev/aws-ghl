@@ -17,6 +17,7 @@ class MgEvent:
     event_type: str
     message_key: str
     message_url: str
+    location_id: str
 
     @staticmethod
     def get_str_value(dic: dict, keys: Iterable[str]):
@@ -53,6 +54,7 @@ class MgEvent:
         _event_type = str(obj.get("event"))
         _message_key = MgEvent.get_str_value(obj, ['storage', 'key'])
         _message_url = MgEvent.get_str_value(obj, ['storage', 'url'])
+        _location_id = MgEvent.get_str_value(obj, ['user-variables', 'loc_id'])
         
         return MgEvent(
             id=_id,
@@ -64,5 +66,6 @@ class MgEvent:
             sender_message_id=_sender_message_id,
             event_type=_event_type,
             message_key=_message_key,
-            message_url=_message_url
+            message_url=_message_url,
+            location_id=_location_id
         )

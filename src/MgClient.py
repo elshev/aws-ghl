@@ -135,32 +135,31 @@ class MgClient:
         return result
 
     
-    def get_message(self, message_url) -> MgMessage:
-        self._logger.debug('get_message(): URL = %s', message_url)
-
-        self._logger.info('get_message(): Making API Call to %s ...', message_url)
+    def get_message(self, mg_event: MgEvent) -> MgMessage:
+        self._logger.info('get_message(): Making API Call to %s ...', mg_event.message_url)
+        
         http = urllib3.PoolManager(headers=self.get_common_headers())
-        response = http.request('GET', url=message_url)
+        response = http.request('GET', url=mg_event.message_url)
         self._log_response(response)
         data_json = json.loads(response.data)
         
         result = MgMessage.from_dict(data_json)
-        result.url = message_url
+        result.mg_event = mg_event
         
         return result
 
-    def get_mime_message(self, message_url) -> MgMessage:
-        self._logger.info('get_message_mime(): Making API Call to %s ...', message_url)
+    def get_mime_message(self, mg_event: MgEvent) -> MgMessage:
+        self._logger.info('get_message_mime(): Making API Call to %s ...', mg_event.message_url)
         
         headers = self.get_common_headers()
         headers['Accept'] = 'message/rfc2822'
         http = urllib3.PoolManager(headers=headers)
-        response = http.request('GET', url=message_url)
+        response = http.request('GET', url=mg_event.message_url)
         data_json = json.loads(response.data)
         self._logger.debug(json.dumps(data_json, indent=2))
 
         result = MgMessage.from_dict(data_json)
-        result.url = message_url
+        result.mg_event = mg_event
         
         return result
 
@@ -210,7 +209,7 @@ class MgClient:
         # Extract Message URLs from events json
         result = []
         for mg_event in mg_events:
-            message = self.get_mime_message(message_url=mg_event.message_url)
+            message = self.get_mime_message(mg_event=mg_event)
             result.append(message)
 
         # self._logger.debug(json.dumps(result, indent=2))

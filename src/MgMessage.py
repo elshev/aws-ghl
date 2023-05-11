@@ -2,10 +2,11 @@ import re
 from typing import Any
 from dataclasses import dataclass
 
+from MgEvent import MgEvent
+
 @dataclass
 class MgMessage:
     """ MailGun message """
-    url: str
     content_type: str
     feedback_id: str
     message_id: str
@@ -18,6 +19,7 @@ class MgMessage:
     recipients: str
     date: str
     body_mime: str
+    mg_event: MgEvent
 
 
     @staticmethod
@@ -44,7 +46,6 @@ class MgMessage:
 
     @staticmethod
     def from_dict(obj: Any) -> 'MgMessage':
-        _url = ''
         _content_type = str(obj.get("Content-Type"))
         _feedback_id = str(obj.get("Feedback-Id"))
         _message_id = str(obj.get("Message-Id"))
@@ -57,8 +58,8 @@ class MgMessage:
         _recipients = str(obj.get("recipients"))
         _date = str(obj.get("Date"))
         _body_mime = MgMessage.fix_body_mime(str(obj.get("body-mime")))
+        _mg_event = None
         return MgMessage(
-            url=_url,
             content_type=_content_type,
             feedback_id=_feedback_id,
             message_id=_message_id,
@@ -70,5 +71,26 @@ class MgMessage:
             sender=_sender,
             recipients=_recipients,
             date=_date,
-            body_mime=_body_mime
+            body_mime=_body_mime,
+            mg_event=_mg_event
         )
+
+    @property
+    def key(self):
+        return self.mg_event.message_key if self.mg_event else None
+    
+    @property
+    def url(self):
+        return self.mg_event.message_url if self.mg_event else None
+    
+    @property
+    def location_id(self):
+        return self.mg_event.location_id if self.mg_event else None
+
+    @property
+    def timestamp(self) -> float:
+        return self.mg_event.timestamp if self.mg_event else None
+
+    @property
+    def recipient(self):
+        return self.mg_event.recipient if self.mg_event else None
