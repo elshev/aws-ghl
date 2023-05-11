@@ -8,6 +8,7 @@ from AppConfig import AppConfig
 from AwsS3Client import AwsS3Client
 from AwsStsClient import AwsStsClient
 from MgClient import MgClient
+from MgMessage import MgMessage
 import mg_store_messages
 import ghl_refresh_token
 import ghl_hook
@@ -106,11 +107,11 @@ def get_messages(begin_date=None):
 
 def get_message_mime(message_url):
     mg_client = MgClient()
-    body_mime = mg_client.get_message_mime(message_url=message_url)
+    message: MgMessage = mg_client.get_message_mime(message_url=message_url)
     output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
     logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
     with open(output_file_path, 'w', newline='\n') as output_file:
-        output_file.write(body_mime)
+        output_file.write(message.body_mime)
         
 
 

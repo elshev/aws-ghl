@@ -8,9 +8,11 @@ from datetime import (
 )
 import logging
 import re
+from typing import Dict
 from urllib.parse import urlencode
 import urllib3
 from AppConfig import AppConfig
+from MgMessage import MgMessage
 
 class MgEventType:
     ACCEPTED = 'accepted'
@@ -77,7 +79,7 @@ class MgClient:
             See https://documentation.mailgun.com/en/latest/api-events.html#events for details
         """
         
-        logging.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
+        self._logger.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
@@ -136,7 +138,7 @@ class MgClient:
 
     
     def get_message(self, message_url):
-        logging.debug('get_message(): URL = %s', message_url)
+        self._loggerdebug('get_message(): URL = %s', message_url)
 
         self._logger.info('get_message(): Making API Call to %s ...', message_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
@@ -146,27 +148,19 @@ class MgClient:
         
         return data_json
 
-    def extract_mime_from_response_json(response):
-        body_mime = response["body-mime"]
-        # Workaround for MailGun bug: 'body-mime' contains mixed line endings '\n' and '\r\n'
-        # Replace single '\n' to '\r\n\' (but not '\n' in '\r\n')
-        pattern = '(?<!\\r)\\n'
-        replacement = '\r\n'
-        result = re.sub(pattern, replacement, body_mime)
-        return result
-        
-
-    def get_message_mime(self, message_url):
+    def get_message_mime(self, message_url) -> MgMessage:
         self._logger.info('get_message_mime(): Making API Call to %s ...', message_url)
+        
         headers = self.get_common_headers()
         headers['Accept'] = 'message/rfc2822'
         http = urllib3.PoolManager(headers=headers)
         response = http.request('GET', url=message_url)
         data_json = json.loads(response.data)
+        # self._logger.debug(json.dumps(data_json, indent=2))
 
-        mime = MgClient.extract_mime_from_response_json(data_json)
+        result = MgMessage.from_dict(data_json)
         
-        return mime
+        return result
 
     def get_messages(self, begin_date, end_date=None):
         """Get Messages from MailGun for a period of time.
@@ -183,14 +177,14 @@ class MgClient:
         message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
         for message_url in message_urls.values():
             message = self.get_message(message_url=message_url)
-            logging.debug(json.dumps(message, indent=2))
+            self._loggerdebug(json.dumps(message, indent=2))
             message_id = message['Message-Id']
             result[message_id] = message
         
         return result
 
 
-    def get_messages_mime(self, begin_date, end_date=None):
+    def get_messages_mime(self, begin_date, end_date=None) -> Dict[str, MgMessage]:
         """Get Messages from MailGun for a period of time in MIME format
 
         Args:
@@ -204,9 +198,9 @@ class MgClient:
         result = {}
         message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
         for message_url in message_urls.values():
-            mime = self.get_message_mime(message_url=message_url)
-            result[message_url] = mime
+            message = self.get_message_mime(message_url=message_url)
+            result[message_url] = message
 
-        # logging.debug(json.dumps(result, indent=2))
+        # self._logger.debug(json.dumps(result, indent=2))
         
         return result
