@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import json
-from typing import Dict
+from typing import Dict, Iterable, List
 from AwsS3Client import AwsS3Client
 from MgClient import MgClient
 from AppConfig import AppConfig
@@ -11,7 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def get_messages_mime(begin_date=None) -> Dict[str, MgMessage]:
+def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
     if not begin_date:
         begin_date = datetime.utcnow().date() + timedelta(days=-1)
     end_date = datetime.utcnow().date()
@@ -33,9 +33,9 @@ def save_message_as_mime(message_key: str, message_mime: str):
             output_file.write(message_mime)
     
 
-def save_messages_as_mime(messages: Dict[str, MgMessage]):
-    for message_url, message in messages.items():
-        message_key = message_url.rsplit('/', 1)[-1]
+def save_messages_as_mime(messages: Iterable[MgMessage]):
+    for message in messages:
+        message_key = message.url.rsplit('/', 1)[-1]
         message_mime = message.body_mime
         
         save_message_as_mime(message_key, message_mime)

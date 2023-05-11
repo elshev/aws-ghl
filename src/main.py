@@ -107,7 +107,7 @@ def get_messages(begin_date=None):
 
 def get_message_mime(message_url):
     mg_client = MgClient()
-    message: MgMessage = mg_client.get_message_mime(message_url=message_url)
+    message: MgMessage = mg_client.get_mime_message(message_url=message_url)
     output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
     logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
     with open(output_file_path, 'w', newline='\n') as output_file:

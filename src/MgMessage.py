@@ -5,6 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class MgMessage:
     """ MailGun message """
+    url: str
     content_type: str
     feedback_id: str
     message_id: str
@@ -42,6 +43,7 @@ class MgMessage:
 
     @staticmethod
     def from_dict(obj: Any) -> 'MgMessage':
+        _url = ''
         _content_type = str(obj.get("Content-Type"))
         _feedback_id = str(obj.get("Feedback-Id"))
         _message_id = str(obj.get("Message-Id"))
@@ -52,15 +54,17 @@ class MgMessage:
         _x_mailgun_variables = str(obj.get("X-Mailgun-Variables"))
         _sender = str(obj.get("sender"))
         _recipients = str(obj.get("recipients"))
-        _body_mime = str(obj.get("body-mime"))
-        _body_mime = MgMessage.fix_body_mime(_body_mime)
+        _body_mime = MgMessage.fix_body_mime(str(obj.get("body-mime")))
         return MgMessage(
+            _url,
             _content_type,
             _feedback_id,
             _message_id,
             _mime_version,
             _reply_to,
-            _subject, _to,
+            _subject,
+            _to,
             _x_mailgun_variables,
-            _sender, _recipients,
+            _sender, 
+            _recipients,
             _body_mime)

@@ -1,5 +1,3 @@
-from enum import Enum
-import inspect
 import json
 from datetime import (
     datetime,
@@ -7,8 +5,7 @@ from datetime import (
     timedelta
 )
 import logging
-import re
-from typing import Dict
+from typing import Iterable
 from urllib.parse import urlencode
 import urllib3
 from AppConfig import AppConfig
@@ -138,7 +135,7 @@ class MgClient:
 
     
     def get_message(self, message_url):
-        self._loggerdebug('get_message(): URL = %s', message_url)
+        self._logger.debug('get_message(): URL = %s', message_url)
 
         self._logger.info('get_message(): Making API Call to %s ...', message_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
@@ -148,7 +145,7 @@ class MgClient:
         
         return data_json
 
-    def get_message_mime(self, message_url) -> MgMessage:
+    def get_mime_message(self, message_url) -> MgMessage:
         self._logger.info('get_message_mime(): Making API Call to %s ...', message_url)
         
         headers = self.get_common_headers()
@@ -159,6 +156,7 @@ class MgClient:
         # self._logger.debug(json.dumps(data_json, indent=2))
 
         result = MgMessage.from_dict(data_json)
+        result.url = message_url
         
         return result
 
@@ -177,14 +175,14 @@ class MgClient:
         message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
         for message_url in message_urls.values():
             message = self.get_message(message_url=message_url)
-            self._loggerdebug(json.dumps(message, indent=2))
+            self._logger.debug(json.dumps(message, indent=2))
             message_id = message['Message-Id']
             result[message_id] = message
         
         return result
 
 
-    def get_messages_mime(self, begin_date, end_date=None) -> Dict[str, MgMessage]:
+    def get_messages_mime(self, begin_date, end_date=None) -> Iterable[MgMessage]:
         """Get Messages from MailGun for a period of time in MIME format
 
         Args:
@@ -195,11 +193,11 @@ class MgClient:
             dict: dictionary: "messageUrl": "MIME string"
             See https://documentation.mailgun.com/en/latest/api-sending.html#retrieving-stored-messages for details
         """
-        result = {}
+        result = []
         message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
         for message_url in message_urls.values():
-            message = self.get_message_mime(message_url=message_url)
-            result[message_url] = message
+            message = self.get_mime_message(message_url=message_url)
+            result.append(message)
 
         # self._logger.debug(json.dumps(result, indent=2))
         
