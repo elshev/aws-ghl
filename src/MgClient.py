@@ -9,6 +9,7 @@ from typing import Iterable
 from urllib.parse import urlencode
 import urllib3
 from AppConfig import AppConfig
+from MgEvent import MgEvent
 from MgMessage import MgMessage
 
 class MgEventType:
@@ -64,7 +65,7 @@ class MgClient:
         return common_headers
         
 
-    def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300):
+    def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300) -> Iterable[MgEvent]:
         """Get Message Events from MailGun for a period of time.
 
         Args:
@@ -98,23 +99,23 @@ class MgClient:
         #self._log_response(response)
         events_json = json.loads(response.data)
         
-        return events_json
+        result = []
+        for item in events_json['items']:
+            mg_event = MgEvent.from_dict(item)    
+            result.append(mg_event)
+        
+        return result
         
 
-    def get_message_urls(self, begin_date, end_date=None, limit=300):
-        """First calls get_events() to get Message Events from MailGun for a period of time.
-        Then extract message URLs from the events retrieved.
+    def get_message_urls(self, events_json, filter_event_type=MgEventType.ACCEPTED):
+        """Extract message URLs from the events retrieved.
 
         Args:
-            begin_date (date): start of period
-            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+            events_json (dict): json representation of Events
 
         Returns:
             dict: dictionary: "messageKey": "messageURL"
         """
-        filter_event_type = MgEventType.ACCEPTED
-        events_json = self.get_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
-
         result = {}
         events = events_json.get('items')
         if not events:
@@ -134,7 +135,7 @@ class MgClient:
         return result
 
     
-    def get_message(self, message_url):
+    def get_message(self, message_url) -> MgMessage:
         self._logger.debug('get_message(): URL = %s', message_url)
 
         self._logger.info('get_message(): Making API Call to %s ...', message_url)
@@ -143,7 +144,10 @@ class MgClient:
         self._log_response(response)
         data_json = json.loads(response.data)
         
-        return data_json
+        result = MgMessage.from_dict(data_json)
+        result.url = message_url
+        
+        return result
 
     def get_mime_message(self, message_url) -> MgMessage:
         self._logger.info('get_message_mime(): Making API Call to %s ...', message_url)
@@ -153,15 +157,17 @@ class MgClient:
         http = urllib3.PoolManager(headers=headers)
         response = http.request('GET', url=message_url)
         data_json = json.loads(response.data)
-        # self._logger.debug(json.dumps(data_json, indent=2))
+        self._logger.debug(json.dumps(data_json, indent=2))
 
         result = MgMessage.from_dict(data_json)
         result.url = message_url
         
         return result
 
-    def get_messages(self, begin_date, end_date=None):
-        """Get Messages from MailGun for a period of time.
+    def get_messages(self, begin_date, end_date=None, limit=300):
+        """
+        First calls get_events() to get Message Events from MailGun for a period of time.
+        Then get Message URLs from event and get Messages from MailGun for each URL.
 
         Args:
             begin_date (date): start of period
@@ -171,18 +177,22 @@ class MgClient:
             dict: dictionary: "messageId": "Message JSON"
             See https://documentation.mailgun.com/en/latest/api-sending.html#retrieving-stored-messages for details
         """
-        result = {}
-        message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
-        for message_url in message_urls.values():
-            message = self.get_message(message_url=message_url)
+
+        # First get message events
+        filter_event_type = MgEventType.ACCEPTED
+        mg_events = self.get_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
+
+        # Extract Message URLs from events json
+        result = []
+        for mg_event in mg_events:
+            message = self.get_message(message_url=mg_event.message_url)
             self._logger.debug(json.dumps(message, indent=2))
-            message_id = message['Message-Id']
-            result[message_id] = message
+            result.append(message)
         
         return result
 
 
-    def get_messages_mime(self, begin_date, end_date=None) -> Iterable[MgMessage]:
+    def get_messages_mime(self, begin_date, end_date=None, limit=300) -> Iterable[MgMessage]:
         """Get Messages from MailGun for a period of time in MIME format
 
         Args:
@@ -193,10 +203,14 @@ class MgClient:
             dict: dictionary: "messageUrl": "MIME string"
             See https://documentation.mailgun.com/en/latest/api-sending.html#retrieving-stored-messages for details
         """
+        # First get message events
+        filter_event_type = MgEventType.ACCEPTED
+        mg_events = self.get_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
+
+        # Extract Message URLs from events json
         result = []
-        message_urls = self.get_message_urls(begin_date=begin_date, end_date=end_date)
-        for message_url in message_urls.values():
-            message = self.get_mime_message(message_url=message_url)
+        for mg_event in mg_events:
+            message = self.get_mime_message(message_url=mg_event.message_url)
             result.append(message)
 
         # self._logger.debug(json.dumps(result, indent=2))

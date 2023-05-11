@@ -16,6 +16,7 @@ class MgMessage:
     x_mailgun_variables: str
     sender: str
     recipients: str
+    date: str
     body_mime: str
 
 
@@ -54,6 +55,7 @@ class MgMessage:
         _x_mailgun_variables = str(obj.get("X-Mailgun-Variables"))
         _sender = str(obj.get("sender"))
         _recipients = str(obj.get("recipients"))
+        _date = str(obj.get("Date"))
         _body_mime = MgMessage.fix_body_mime(str(obj.get("body-mime")))
         return MgMessage(
             _url,
@@ -67,4 +69,5 @@ class MgMessage:
             _x_mailgun_variables,
             _sender, 
             _recipients,
+            _date,
             _body_mime)
