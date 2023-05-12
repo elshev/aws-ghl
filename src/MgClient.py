@@ -77,7 +77,7 @@ class MgClient:
             See https://documentation.mailgun.com/en/latest/api-events.html#events for details
         """
         
-        self._logger.debug('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
+        self._logger.info('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
@@ -86,7 +86,7 @@ class MgClient:
             'ascending': 'yes',
             'limit': limit
         }
-        if (end_date):
+        if end_date:
             end_timestamp = MgClient._get_timestamp(end_date)
             request_body['end'] = end_timestamp
 
@@ -96,7 +96,7 @@ class MgClient:
         self._logger.info('get_events(): Making API Call to %s ...', events_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=url)
-        #self._log_response(response)
+        self._log_response(response)
         events_json = json.loads(response.data)
         
         result = []

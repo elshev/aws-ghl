@@ -8,7 +8,7 @@ class AwsSsmClient:
 
 
     def get_ssm_parameter(self, name):
-        parameter = self._ssm_client.get_parameter(Name=name)
+        parameter = self._ssm_client.get_parameter(Name=name, WithDecryption=True)
         return parameter['Parameter']['Value']
 
 

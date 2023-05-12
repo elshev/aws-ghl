@@ -17,3 +17,4 @@ PrintSsmValue '/GHL/Dev/CurlWisdom/AccessToken';
 # PrintSsmValue '/GHL/Dev/CurlWisdom/RefreshToken';
 # PrintSsmValue '/GHL/Dev/CurlWisdom/ClientId';
 # PrintSsmValue '/GHL/Dev/CurlWisdom/ClientSecret';
+# PrintSsmValue '/GHL/Dev/CurlWisdom/MailGunApiKey';
