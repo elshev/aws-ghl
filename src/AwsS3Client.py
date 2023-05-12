@@ -15,18 +15,21 @@ class AwsS3Client:
     _aws_sts_client = AwsStsClient()
     _aws_account_id = ''
     
-    # "location_id: bucket_name" pairs
+    # Local cache to avoid redundant calls to AWS: "location_id": "bucket_name" pairs
     _bucket_cache = {}    
 
+    
     @property
     def aws_account_id(self):
         if not AwsS3Client._aws_account_id:
             AwsS3Client._aws_account_id = self._aws_sts_client.get_aws_account_id()
         return AwsS3Client._aws_account_id
 
+    
     def __init__(self) -> None:
         self._s3_client = boto3.client('s3')
 
+    
     @staticmethod
     def time_to_str(date_time = None):
         if not isinstance(date_time, date):
@@ -54,9 +57,11 @@ class AwsS3Client:
             json.dump(data, f, ensure_ascii=False, indent=4)
         return file_path
 
+    
     def get_bucket_name_by_location(self, location_id: str):
         return f'ghl-{self.aws_account_id}-{location_id.lower()}'
 
+    
     def check_bucket(self, location_id: str):
         """Checks if a bucket for location_id exists. If not creates it
 
@@ -96,15 +101,18 @@ class AwsS3Client:
             AwsS3Client._bucket_cache[location_id] = bucket_name
         return bucket_name
     
+    
     @staticmethod
     def get_object_key_from_contact(contact_id: str):
         dt = datetime.now()
         return f'{contact_id}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.json'
 
+    
     @staticmethod
     def get_object_key_from_mg_message(message: MgMessage):
         dt = datetime.fromtimestamp(message.timestamp)
         return f'{message.recipient}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
+    
     
     def upload_conversation_to_s3(self, location_id, contact_id, data):
         bucket_name = self.check_bucket(location_id)
@@ -124,6 +132,7 @@ class AwsS3Client:
         AwsS3Client.logger.info('Response: %s', response)
         return True
 
+    
     def save_message_as_mime(message: MgMessage):
         message_key = message.key.strip('=').lower()
         output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S-%f")}-{message_key}.eml'

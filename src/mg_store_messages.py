@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 
 def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
     if not begin_date:
-        begin_date = datetime.utcnow().date() + timedelta(days=-1)
+        begin_date = datetime.utcnow().date() + timedelta(days=-2)
     end_date = datetime.utcnow().date()
  
     mg_client = MgClient()
