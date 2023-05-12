@@ -1,6 +1,7 @@
 import json
 import logging
 import urllib3
+from AppConfig import AppConfig
 from AwsSsmClient import AwsSsmClient
 
 GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
@@ -17,8 +18,9 @@ class ConversationRepository:
         self._logger = logging.getLogger()
         self._base_url = GHL_HOSTNAME
 
+
     def get_access_token(self):
-        return self._ssm_client.get_access_token()
+        return AppConfig.get_ghl_access_token()
 
 
     def ghl_request(self, path):

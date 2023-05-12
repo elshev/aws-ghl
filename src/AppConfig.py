@@ -1,7 +1,21 @@
 import os
 
+from AwsSsmClient import AwsSsmClient
+
 class AppConfig:
 
+    GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
+    MAILGUN_API_KEY_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/MailGunApiKey'
+
+    def is_local_execution():
+        return os.environ.get['AWS_LAMBDA_FUNCTION_NAME'] is None
+    
+    def is_aws_execution():
+        return not AppConfig.is_local_execution()
+    
+    def get_ghl_access_token(self):
+        return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', AppConfig.GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
+    
     def get_aws_bucket_name():
         return os.environ['GHL_BUCKET_NAME']
 
@@ -15,7 +29,8 @@ class AppConfig:
         return os.environ['MAILGUN_DOMAIN']
 
     def get_mailgun_api_key():
-        return os.environ['MAILGUN_API_KEY']
+        aws_ssm_client = AwsSsmClient()
+        return aws_ssm_client.get_parameter(env_name='MAILGUN_API_KEY', env_ssm_parameter_name=AppConfig.MAILGUN_API_KEY_SSM_PARAMETER_NAME)
 
     def get_temp_folder_path():
         return os.environ.get('TEMP_FOLDER', '/tmp/ghl')

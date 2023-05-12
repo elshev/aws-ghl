@@ -7,8 +7,9 @@ from urllib.parse import urlencode
 import boto3
 import urllib3
 
+from AppConfig import AppConfig
 
-GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
+
 GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
 GHL_ACCESS_TOKEN_EXPIRE_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessTokenExpire'
 GHL_CLIENT_ID_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/ClientId'
@@ -114,7 +115,7 @@ def ghl_refresh_token():
         expires_in = int(data['expires_in']) - 10
         expire_date = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
         expire_timestamp = datetime.datetime.timestamp(expire_date)
-        update_ssm_string_parameter(GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME, access_token)
+        update_ssm_string_parameter(AppConfig.GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME, access_token)
         update_ssm_string_parameter(GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME, refresh_token)
         update_ssm_string_parameter(GHL_ACCESS_TOKEN_EXPIRE_SSM_PARAMETER_NAME, str(expire_timestamp))
 

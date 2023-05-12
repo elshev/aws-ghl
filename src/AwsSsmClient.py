@@ -1,9 +1,6 @@
 import os
 import boto3
 
-GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
-GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
-
 class AwsSsmClient:
 
     def __init__(self) -> None:
@@ -22,8 +19,10 @@ class AwsSsmClient:
             Value=value,
         )
 
+    _param_cache = {}
 
-    def get_parameter(self, env_name, env_ssm_parameter_name):
+    @staticmethod
+    def get_parameter(env_name, env_ssm_parameter_name):
         '''
         If 'env_name' exists in environment variables, returns its value
         Otherwise, goes to SSM Parameter Store and returns value for parameter with name = env_ssm_parameter_name
@@ -32,9 +31,10 @@ class AwsSsmClient:
         if env_name in os.environ:
             result = os.environ[env_name]
         if result is None or result == '':
-            result = self.get_ssm_parameter(env_ssm_parameter_name)
+            result = AwsSsmClient._param_cache.get(env_ssm_parameter_name)
+            if result is None or result == '':
+                aws_ssm_client = AwsSsmClient()
+                result = aws_ssm_client.get_ssm_parameter(env_ssm_parameter_name)
+                AwsSsmClient._param_cache[env_ssm_parameter_name] = result
         return result
     
-    def get_access_token(self):
-        return self.get_parameter('GHL_ACCESS_TOKEN', GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
-

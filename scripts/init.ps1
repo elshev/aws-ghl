@@ -1,40 +1,34 @@
 $awsProfileName = 'default';
 
+## Secret Values here
 # Put GoHighLevel values here. See: https://highlevel.stoplight.io/docs/integrations/6d8a9d06190b0-fa-qs
 $clientId = '';
 $clientSecret = '';
 $accessToken = '';
 $refreshToken = '';
+# MailGun
+$mailgunApiKey = '';
+
+function PutParameter($name, $value, $type) {
+    if ($value) {
+        Write-Output "Put '$type' parameter '${name}' = '${value}' ...";
+        aws ssm put-parameter `
+            --name ${name} `
+            --type $type `
+            --value ${value} `
+            --profile ${awsProfileName} `
+            --overwrite
+        ;
+    } else {
+        Write-Output "Skipping parameter ${name} because its value is empty...";
+    }
+
+}
 
 # Create parameters in AWS Parameter Store
-aws ssm put-parameter `
-    --name '/GHL/Dev/CurlWisdom/RefreshToken' `
-    --type 'SecureString' `
-    --value ${refreshToken} `
-    --profile ${awsProfileName} `
-    --overwrite
-;
+PutParameter -name '/GHL/Dev/CurlWisdom/RefreshToken' -value ${refreshToken} -type 'SecureString';
+PutParameter -name '/GHL/Dev/CurlWisdom/AccessToken' -value ${accessToken} -type 'SecureString';
+PutParameter -name '/GHL/Dev/CurlWisdom/ClientId' -value ${clientId} -type 'SecureString';
+PutParameter -name '/GHL/Dev/CurlWisdom/ClientSecret' -value ${clientSecret} -type 'SecureString';
 
-aws ssm put-parameter `
-    --name '/GHL/Dev/CurlWisdom/AccessToken' `
-    --type 'SecureString' `
-    --value ${accessToken} `
-    --profile ${awsProfileName} `
-    --overwrite
-;
-
-aws ssm put-parameter `
-    --name '/GHL/Dev/CurlWisdom/ClientId' `
-    --type 'SecureString' `
-    --value ${clientId} `
-    --profile ${awsProfileName} `
-    --overwrite
-;
-
-aws ssm put-parameter `
-    --name '/GHL/Dev/CurlWisdom/ClientSecret' `
-    --type 'SecureString' `
-    --value ${clientSecret} `
-    --profile ${awsProfileName} `
-    --overwrite
-;
+PutParameter -name '/GHL/Dev/CurlWisdom/MailGunApiKey' -value ${mailgunApiKey} -type 'SecureString';

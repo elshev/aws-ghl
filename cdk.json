@@ -47,7 +47,13 @@
     "@aws-cdk/aws-stepfunctions-tasks:enableEmrServicePolicyV2": true,
     "envs": {
       "dev-curl-wisdom": {
-        "client-key": "curlwisdom"
+        "client-key": "curlwisdom",
+        "env-vars": {
+          "TEMP_FOLDER": "/tmp/ghl",
+          "AWS_BUCKET_REGION": "us-east-1",
+          "MAILGUN_API_URL": "https://api.mailgun.net/v3",
+          "MAILGUN_DOMAIN": "send.dignamail.com"
+        }
       }
     }
   }

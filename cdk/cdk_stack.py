@@ -24,8 +24,6 @@ class GoHighLevelStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, stage: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        GHL_BUCKET_NAME_ENV_KEY = 'GHL_BUCKET_NAME'
-    
         self._python_runtime = _lambda.Runtime.PYTHON_3_9
 
         envs = self.node.try_get_context("envs")
@@ -33,6 +31,15 @@ class GoHighLevelStack(Stack):
         env_key = list(envs.keys())[0]
         env = envs[env_key]
         client_key = env['client-key']
+        env_vars = env['env-vars']
+
+        # S3 bucket name should be unique around the world 
+        # but we don't know the AWS Account ID until the deployment
+        # So, use boto3 that relies on .aws [default] profile as a workaround here
+        account_id = boto3.client("sts").get_caller_identity()["Account"]
+        s3_bucket_name = f'ghl-{account_id}-{client_key}'
+        env_vars['GHL_BUCKET_NAME'] = s3_bucket_name
+
         
         # Create IAM role for Lambda functions
         ghl_lambda_role = iam.Role(
@@ -103,11 +110,6 @@ class GoHighLevelStack(Stack):
 
 
         # Create Client S3 bucket
-        # S3 bucket name should be unique around the world 
-        # but we don't know the AWS Account ID until the deployment
-        # So use boto3 that relies on .aws [default] profile as a workaround here
-        account_id = boto3.client("sts").get_caller_identity()["Account"]
-        s3_bucket_name = f'ghl-{account_id}-{client_key}'
         s3_bucket = s3.Bucket(
             self,
             id='GhlClientBucket',
@@ -147,9 +149,7 @@ class GoHighLevelStack(Stack):
             timeout=Duration.seconds(180),
             description="WebHook for GoHighLevel ConversationUnread event",
             architecture=_lambda.Architecture.X86_64,
-            environment={
-                GHL_BUCKET_NAME_ENV_KEY: s3_bucket_name,
-            },
+            environment=env_vars,
         )
 
         # Create the REST API using API Gateway
@@ -178,9 +178,7 @@ class GoHighLevelStack(Stack):
             timeout=Duration.seconds(300),
             description="Gets events from MailGun and then stores messages to S3 bucket",
             architecture=_lambda.Architecture.X86_64,
-            environment={
-                GHL_BUCKET_NAME_ENV_KEY: s3_bucket_name,
-            },
+            environment=env_vars,
         )
 
         # Add a schedule event to trigger the mg_store_messages function
