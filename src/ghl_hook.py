@@ -35,4 +35,4 @@ def lambda_handler(event, context):
     logger.info('Search Conversation by ID result: \n%s', conversation)
 
     s3_client = AwsS3Client()
-    s3_client.upload_conversation_to_s3(location_id, contact_id, conversation)
+    s3_client.upload_conversation_to_s3(contact_id, conversation)

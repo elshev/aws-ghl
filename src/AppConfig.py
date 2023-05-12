@@ -2,6 +2,9 @@ import os
 
 class AppConfig:
 
+    def get_aws_bucket_name():
+        return os.environ['GHL_BUCKET_NAME']
+
     def get_aws_bucket_region():
         return os.environ.get('AWS_BUCKET_REGION', 'us-east-1')
 
@@ -16,6 +19,7 @@ class AppConfig:
 
     def get_temp_folder_path():
         return os.environ.get('TEMP_FOLDER', '/tmp/ghl')
+
 
     @staticmethod
     def get_temp_file_path(relative_file_path):

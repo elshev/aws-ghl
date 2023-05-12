@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import json
-from typing import Dict, Iterable, List
+from typing import Iterable
 from AwsS3Client import AwsS3Client
 from MgClient import MgClient
 from AppConfig import AppConfig

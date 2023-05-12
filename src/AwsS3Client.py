@@ -15,8 +15,8 @@ class AwsS3Client:
     _aws_sts_client = AwsStsClient()
     _aws_account_id = ''
     
-    # Local cache to avoid redundant calls to AWS: "location_id": "bucket_name" pairs
-    _bucket_cache = {}    
+    # Optimization variable to avoid redundant calls to AWS to check if the bucket exists
+    _bucket_exists = None
 
     
     @property
@@ -38,13 +38,12 @@ class AwsS3Client:
 
 
     @staticmethod
-    def remove_tmp_file(file_name):
-        lambda_path = AppConfig.get_tmp_file_path(file_name)
+    def remove_tmp_file(file_path):
         try:
-            if os.path.isfile(lambda_path):
-                os.remove(lambda_path)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
             else:
-                AwsS3Client.logger.error('Error: %s file not found', lambda_path)
+                AwsS3Client.logger.error('Error: %s file not found', file_path)
         except OSError as e:
             AwsS3Client.logger.error('Error while removing file: %s - %s', e.filename, e.strerror)
 
@@ -58,31 +57,20 @@ class AwsS3Client:
         return file_path
 
     
-    def get_bucket_name_by_location(self, location_id: str):
-        return f'ghl-{self.aws_account_id}-{location_id.lower()}'
-
-    
-    def check_bucket(self, location_id: str):
-        """Checks if a bucket for location_id exists. If not creates it
-
-        Args:
-            location_id (str): GoHighLevel Location ID
+    def check_bucket(self):
+        """Checks if a bucket exists. If not creates it
 
         Returns:
             str: Bucket Name.
         """
         # try to get a bucket name from cache first
-        bucket_name = None
-        if not location_id:
-            raise ValueError('Parameter "location_id" is not defined')
-        if location_id in AwsS3Client._bucket_cache:
-            bucket_name = AwsS3Client._bucket_cache[location_id]
+        bucket_name = AppConfig.get_aws_bucket_name()
         #         
-        if not bucket_name:
-            bucket_name = self.get_bucket_name_by_location(location_id)
+        if not AwsS3Client._bucket_exists:
+            bucket_name = AppConfig.get_aws_bucket_name()
             s3_resource = boto3.resource("s3")
             bucket_resource = s3_resource.Bucket(bucket_name)
-            # Create bucket in S3 if doesn't exist
+            # Create a bucket in S3 if it doesn't exist
             if bucket_resource.creation_date is None:
                 AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating...", bucket_name)
                 create_bucket_configuration = {}
@@ -98,7 +86,7 @@ class AwsS3Client:
                     self._s3_client.create_bucket(Bucket=bucket_name)
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
-            AwsS3Client._bucket_cache[location_id] = bucket_name
+            AwsS3Client._bucket_exists = True
         return bucket_name
     
     
@@ -114,8 +102,8 @@ class AwsS3Client:
         return f'{message.recipient}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
     
     
-    def upload_conversation_to_s3(self, location_id, contact_id, data):
-        bucket_name = self.check_bucket(location_id)
+    def upload_conversation_to_s3(self, contact_id, data):
+        bucket_name = self.check_bucket()
         key_name = AwsS3Client.get_object_key_from_contact(contact_id)
         s3_path = f'{bucket_name}/{key_name}'
         tmp_file_path = AwsS3Client.data_to_tmp_file(data, key_name)
@@ -145,7 +133,7 @@ class AwsS3Client:
         
             
     def upload_message_to_s3(self, message: MgMessage):
-        bucket_name = self.check_bucket(message.location_id)
+        bucket_name = self.check_bucket()
         key_name = AwsS3Client.get_object_key_from_mg_message(message=message)
         s3_path = f'{bucket_name}/{key_name}'
         tmp_file_path = AwsS3Client.save_message_as_mime(message=message)
@@ -157,8 +145,7 @@ class AwsS3Client:
             AwsS3Client.logger.error(e)
             return False
         finally:
-            #AwsS3Client.remove_tmp_file(tmp_file_path)
-            pass
+            AwsS3Client.remove_tmp_file(tmp_file_path)
         AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
         AwsS3Client.logger.info('Response: %s', response)
         return True
