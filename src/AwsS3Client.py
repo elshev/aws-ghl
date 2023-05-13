@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
 from MgMessage import MgMessage
+from Util import Util
 
 
 class AwsS3Client:
@@ -126,9 +127,8 @@ class AwsS3Client:
         output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S-%f")}-{message_key}.eml'
         output_file_path = AppConfig.get_temp_file_path(output_file_name)
         logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
-        with open(output_file_path, 'w', newline='\n') as output_file:
-            output_file.write(message.body_mime)
-        
+        Util.write_file(output_file_path, message.body_mime, newline='\n')
+
         return output_file_path
         
             

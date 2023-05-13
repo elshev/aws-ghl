@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+import os
+from pathlib import Path
 import logging
 import json
 from typing import Iterable
@@ -6,6 +8,7 @@ from AwsS3Client import AwsS3Client
 from MgClient import MgClient
 from AppConfig import AppConfig
 from MgMessage import MgMessage
+from Util import Util
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -13,7 +16,7 @@ logger.setLevel(logging.INFO)
 
 def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
     if not begin_date:
-        begin_date = datetime.utcnow().date() + timedelta(days=-2)
+        begin_date = datetime.utcnow().date() + timedelta(days=-3)
     end_date = datetime.utcnow().date()
  
     mg_client = MgClient()
@@ -25,12 +28,11 @@ def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
 
 
 def save_message_as_mime(message_key: str, message_mime: str):
-        message_key = message_key.strip('=').lower()
-        output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-{message_key}.eml'
-        output_file_path = AppConfig.get_temp_file_path(output_file_name)
-        logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
-        with open(output_file_path, 'w', newline='\n') as output_file:
-            output_file.write(message_mime)
+    message_key = message_key.strip('=').lower()
+    output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-{message_key}.eml'
+    output_file_path = AppConfig.get_temp_file_path(output_file_name)
+    logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
+    Util.write_file(output_file_path, message_mime, newline='\n')
     
 
 def save_messages_as_mime(messages: Iterable[MgMessage]):
