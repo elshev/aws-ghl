@@ -1,6 +1,7 @@
 import re
 from typing import Any
 from dataclasses import dataclass
+from AppConfig import AppConfig
 
 from MgEvent import MgEvent
 
@@ -94,3 +95,11 @@ class MgMessage:
     @property
     def recipient(self):
         return self.mg_event.recipient if self.mg_event else None
+
+    @property
+    def recipient_domain(self):
+        return self.mg_event.recipient_domain if self.mg_event else None
+
+    @property
+    def is_reply_from_user(self):
+        return self.recipient_domain == AppConfig.get_mailgun_domain()

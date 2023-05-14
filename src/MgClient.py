@@ -63,7 +63,7 @@ class MgClient:
         common_headers = urllib3.make_headers(basic_auth=f'api:{self._mg_api_key}')
         common_headers['Content-Type'] = 'application/x-www-form-urlencoded'
         return common_headers
-        
+
 
     def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300) -> Iterable[MgEvent]:
         """Get Message Events from MailGun for a period of time.
@@ -101,7 +101,10 @@ class MgClient:
         
         result = []
         for item in events_json['items']:
-            mg_event = MgEvent.from_dict(item)    
+            mg_event = MgEvent.from_dict(item)
+            # Exclude service events
+            if mg_event.recipient.startswith('https://') or '/inbound_webhook' in mg_event.recipient:
+                continue
             result.append(mg_event)
         
         return result
@@ -211,7 +214,6 @@ class MgClient:
         for mg_event in mg_events:
             message = self.get_mime_message(mg_event=mg_event)
             result.append(message)
-
-        # self._logger.debug(json.dumps(result, indent=2))
+            # self._logger.debug(json.dumps(message, indent=2, default=vars))
         
         return result

@@ -11,6 +11,7 @@ class MgEvent:
     timestamp: float
     sender: str
     recipient: str
+    recipient_domain: str
     subject: str
     message_size: int
     sender_message_id: str
@@ -48,6 +49,7 @@ class MgEvent:
         _timestamp = MgEvent.get_float_value(obj, ['timestamp'])
         _sender = MgEvent.get_str_value(obj, ['envelope', 'sender'])
         _recipient = str(obj.get("recipient"))
+        _recipient_domain = str(obj.get("recipient-domain"))
         _subject = MgEvent.get_str_value(obj, ['message', 'headers', 'subject'])
         _message_size = MgEvent.get_int_value(obj, ['message', 'size'])
         _sender_message_id = MgEvent.get_str_value(obj, ['message', 'headers', 'message-id'])
@@ -61,6 +63,7 @@ class MgEvent:
             timestamp=_timestamp,
             sender=_sender,
             recipient=_recipient,
+            recipient_domain=_recipient_domain,
             subject = _subject,
             message_size=_message_size,
             sender_message_id=_sender_message_id,

@@ -100,7 +100,8 @@ class AwsS3Client:
     @staticmethod
     def get_object_key_from_mg_message(message: MgMessage):
         dt = datetime.fromtimestamp(message.timestamp)
-        return f'{message.recipient}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
+        folder_name = message.sender if message.is_reply_from_user else message.recipient
+        return f'{folder_name}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
     
     
     def upload_conversation_to_s3(self, contact_id, data):
@@ -131,7 +132,7 @@ class AwsS3Client:
 
         return output_file_path
         
-            
+
     def upload_message_to_s3(self, message: MgMessage):
         bucket_name = self.check_bucket()
         key_name = AwsS3Client.get_object_key_from_mg_message(message=message)

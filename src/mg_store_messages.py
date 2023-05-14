@@ -16,8 +16,8 @@ logger.setLevel(logging.INFO)
 
 def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
     if not begin_date:
-        begin_date = datetime.utcnow().date() + timedelta(days=-3)
-    end_date = datetime.utcnow().date()
+        begin_date = datetime.utcnow().date() + timedelta(days=-1)
+    end_date = datetime.utcnow().date() + timedelta(days=1)
  
     mg_client = MgClient()
     messages = mg_client.get_messages_mime(begin_date=begin_date, end_date=end_date)
@@ -27,26 +27,12 @@ def get_messages_mime(begin_date=None) -> Iterable[MgMessage]:
     return messages
 
 
-def save_message_as_mime(message_key: str, message_mime: str):
-    message_key = message_key.strip('=').lower()
-    output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}-{message_key}.eml'
-    output_file_path = AppConfig.get_temp_file_path(output_file_name)
-    logging.info(f'Dumpping MIME to the file: "{output_file_path}"')
-    Util.write_file(output_file_path, message_mime, newline='\n')
-    
-
-def save_messages_as_mime(messages: Iterable[MgMessage]):
-    for message in messages:
-        save_message_as_mime(message.key, message.body_mime)
-
-
 def handler(event, context):
     logger.info('Event: %s', event)
     if not context is None:
         logger.info('Context: %s', context)
 
     messages = get_messages_mime()
-    save_messages_as_mime(messages)
 
     s3_client = AwsS3Client()
     for message in messages:
