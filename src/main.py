@@ -126,10 +126,6 @@ def main():
     image_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQXnBYIdw7zaAqhGtojzqVlAljyQZA=='
     reply_with_image_attachment_url = 'https://storage-us-west1.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQUlwG92Py50ElpITJuKKR_LQV1AYQ=='
     message_url = reply_with_image_attachment_url
-    # get_mime_message_to_file(message_url)
-    # get_message_mime(message_url=message_url)
-    # get_messages()
-    # get_messages_mime()
     
     mg_store_messages.handler({}, None)
 

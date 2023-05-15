@@ -1,0 +1,8 @@
+{
+    "GhlAccountKey": "dignava",
+    "GhlSubAccountKey": "curlwisdom",
+    "Stage": "prod",
+    "AwsBucketRegion": "us-east-1",
+    "MailGunApiUrl": "https://api.mailgun.net/v3",
+    "MailGunDomain": "send.dignamail.com"
+}

@@ -23,37 +23,31 @@ class GoHighLevelStack(Stack):
         return self._python_runtime
 
     def __init__(self, scope: Construct, config_file_path: str, **kwargs) -> None:
-    # def __init__(self, scope: Construct, construct_id: str, stage: str, **kwargs) -> None:
         
         config_json: dict = {}
         with open(config_file_path) as f:
             config_json = json.load(f)
         ghl_account_key = config_json['GhlAccountKey']
         ghl_subaccount_key = config_json['GhlSubAccountKey']
-        construct_id = f'ghl-{ghl_account_key}-{ghl_subaccount_key}'
+        stage = config_json.get('Stage', 'dev')
+        is_prod = stage == 'prod'
+        stage_suffix = '' if is_prod else f'-{stage}'
+        construct_id = f'ghl-{ghl_account_key}-{ghl_subaccount_key}{stage_suffix}'
 
         super().__init__(scope, construct_id, **kwargs)
 
         self._python_runtime = _lambda.Runtime.PYTHON_3_9
 
         # Load other settings from config
-        stage = config_json.get('Stage', 'dev')
         aws_bucket_region = config_json.get('AwsBucketRegion', 'us-east-1')
         mailgun_api_url = config_json.get('MailGunApiUrl', 'https://api.mailgun.net/v3')
         mailgun_domain = config_json['MailGunDomain']
-
-        # envs = self.node.try_get_context("envs")
-        # Take first Environment
-        # env_key = list(envs.keys())[0]
-        # env = envs[env_key]
-        # client_key = env['client-key']
-        # env_vars = env['env-vars']
 
         # S3 bucket name should be unique around the world 
         # but we don't know the AWS Account ID until the deployment
         # So, use boto3 that relies on .aws [default] profile as a workaround here
         account_id = boto3.client("sts").get_caller_identity()["Account"]
-        s3_bucket_name = f'ghl-{account_id}-{ghl_subaccount_key}-{stage}'
+        s3_bucket_name = f'ghl-{account_id}-{ghl_subaccount_key}{stage_suffix}'
         
         # Define Environment Variables for Lambda functions
         env_vars = {

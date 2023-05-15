@@ -1,5 +1,5 @@
 {
-  "app": "python app.py --config config-curlwisdom.json",
+  "app": "python app.py --config ./cdk/config/config-curlwisdom-dev.json",
   "watch": {
     "include": [
       "**"
