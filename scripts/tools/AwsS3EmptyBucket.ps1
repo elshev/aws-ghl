@@ -1,7 +1,8 @@
 $awsProfileName = 'default';
 $buckets = @{
     'test-489440259680' = $false;
-    'ghl-489440259680-curlwisdom' = $false;
+    # 'ghl-489440259680-curlwisdom' = $false;
+    # 'ghl-489440259680-curlwisdom-dev' = $false;
     'ghl-489440259680-test' = $true;
     # 'ghl-489440259680-dfulfpb0vzwgurgr3ib3' = $true;
     # 'ghl-489440259680-none' = $true;
