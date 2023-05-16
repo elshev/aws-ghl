@@ -10,12 +10,10 @@ import urllib3
 from AppConfig import AppConfig
 
 
-GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/RefreshToken'
-GHL_ACCESS_TOKEN_EXPIRE_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessTokenExpire'
-GHL_CLIENT_ID_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/ClientId'
-GHL_CLIENT_SECRET_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/ClientSecret'
-
-GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
+refresh_token_ssm_parameter_name = f'{AppConfig.get_ssm_parameter_path()}/RefreshToken'
+access_token_expire_ssm_parameter_name = f'{AppConfig.get_ssm_parameter_path()}/AccessTokenExpire'
+client_id_ssm_parameter_name = f'{AppConfig.get_ssm_parameter_path()}/ClientId'
+client_secret_ssm_parameter_name = f'{AppConfig.get_ssm_parameter_path()}/ClientSecret'
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -65,15 +63,15 @@ def update_ssm_secure_string_parameter(name, value):
 
 
 def get_client_id():
-    return get_parameter('GHL_CLIENT_ID', GHL_CLIENT_ID_SSM_PARAMETER_NAME)
+    return get_parameter('GHL_CLIENT_ID', client_id_ssm_parameter_name)
 
 
 def get_client_secret():
-    return get_parameter('GHL_CLIENT_SECRET', GHL_CLIENT_SECRET_SSM_PARAMETER_NAME)
+    return get_parameter('GHL_CLIENT_SECRET', client_secret_ssm_parameter_name)
 
 
 def get_refresh_token():
-    return get_parameter('GHL_REFRESH_TOKEN', GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME)
+    return get_parameter('GHL_REFRESH_TOKEN', refresh_token_ssm_parameter_name)
 
 
 def ghl_refresh_token():
@@ -81,7 +79,7 @@ def ghl_refresh_token():
     Refreshes Access Token as described here: https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token.
     Stores new Access and Refresh Tokens in SSM Parameter Store
     '''
-    url = GHL_HOSTNAME + '/oauth/token'
+    url = f'{AppConfig.get_ghl_base_url()}/oauth/token'
     refresh_token = get_refresh_token()
     client_id = get_client_id()
     client_secret = get_client_secret()
@@ -116,8 +114,8 @@ def ghl_refresh_token():
         expire_date = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
         expire_timestamp = datetime.datetime.timestamp(expire_date)
         update_ssm_string_parameter(AppConfig.GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME, access_token)
-        update_ssm_string_parameter(GHL_REFRESH_TOKEN_SSM_PARAMETER_NAME, refresh_token)
-        update_ssm_string_parameter(GHL_ACCESS_TOKEN_EXPIRE_SSM_PARAMETER_NAME, str(expire_timestamp))
+        update_ssm_string_parameter(refresh_token_ssm_parameter_name, refresh_token)
+        update_ssm_string_parameter(access_token_expire_ssm_parameter_name, str(expire_timestamp))
 
     return result
 

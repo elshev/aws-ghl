@@ -4,8 +4,6 @@ import urllib3
 from AppConfig import AppConfig
 from AwsSsmClient import AwsSsmClient
 
-GHL_HOSTNAME = 'https://services.leadconnectorhq.com'
-
 class ConversationRepository:
     @property
     def location_id(self):
@@ -16,7 +14,7 @@ class ConversationRepository:
         self._ghl_api_version = '2021-07-28'
         self._location_id = location_id
         self._logger = logging.getLogger()
-        self._base_url = GHL_HOSTNAME
+        self._base_url = AppConfig.get_ghl_base_url()
 
 
     def get_access_token(self):

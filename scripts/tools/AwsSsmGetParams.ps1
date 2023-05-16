@@ -18,7 +18,7 @@ $ghlAccountKey = $json.GhlAccountKey;
 $ghlSubaccountKey = $json.ghlSubaccountKey;
 
 $ssmStoreParameterPath = "/${stage}/ghl/${ghlAccountKey}/${ghlSubaccountKey}"
-$ssmStoreParameterPath = '/GHL/Dev/CurlWisdom'
+
 function PrintSsmValue($name) {
     $path = "${ssmStoreParameterPath}/$name"
     $hashTable = aws ssm get-parameter `

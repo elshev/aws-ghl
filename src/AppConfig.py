@@ -17,9 +17,14 @@ class AppConfig:
         return os.environ['SSM_PARAMETER_STORE_PATH']
 
     @staticmethod
+    def get_ghl_base_url():
+        return 'https://services.leadconnectorhq.com'
+
+    @staticmethod
     def get_ghl_access_token():
         access_token_param_name = f'{AppConfig.get_ssm_parameter_path()}/AccessToken'
         return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', access_token_param_name)
+   
     
     @staticmethod
     def get_aws_bucket_name():
@@ -32,7 +37,7 @@ class AppConfig:
     @staticmethod
     def get_mailgun_api_url():
         return os.environ.get('MAILGUN_API_URL', 'https://api.mailgun.net/v3')
-    
+
     @staticmethod
     def get_mailgun_domain():
         return os.environ['MAILGUN_DOMAIN']
