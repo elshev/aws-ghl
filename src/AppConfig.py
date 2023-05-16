@@ -4,34 +4,45 @@ from AwsSsmClient import AwsSsmClient
 
 class AppConfig:
 
-    GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/AccessToken'
-    MAILGUN_API_KEY_SSM_PARAMETER_NAME = '/GHL/Dev/CurlWisdom/MailGunApiKey'
-
+    @staticmethod
     def is_local_execution():
         return os.environ.get['AWS_LAMBDA_FUNCTION_NAME'] is None
     
+    @staticmethod
     def is_aws_execution():
         return not AppConfig.is_local_execution()
     
-    def get_ghl_access_token(self):
-        return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', AppConfig.GHL_ACCESS_TOKEN_SSM_PARAMETER_NAME)
+    @staticmethod
+    def get_ssm_parameter_path():
+        return os.environ['SSM_PARAMETER_STORE_PATH']
+
+    @staticmethod
+    def get_ghl_access_token():
+        access_token_param_name = f'{AppConfig.get_ssm_parameter_path()}/AccessToken'
+        return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', access_token_param_name)
     
+    @staticmethod
     def get_aws_bucket_name():
         return os.environ['GHL_BUCKET_NAME']
 
+    @staticmethod
     def get_aws_bucket_region():
         return os.environ.get('AWS_BUCKET_REGION', 'us-east-1')
 
+    @staticmethod
     def get_mailgun_api_url():
         return os.environ.get('MAILGUN_API_URL', 'https://api.mailgun.net/v3')
     
+    @staticmethod
     def get_mailgun_domain():
         return os.environ['MAILGUN_DOMAIN']
 
+    @staticmethod
     def get_mailgun_api_key():
-        aws_ssm_client = AwsSsmClient()
-        return aws_ssm_client.get_parameter(env_name='MAILGUN_API_KEY', env_ssm_parameter_name=AppConfig.MAILGUN_API_KEY_SSM_PARAMETER_NAME)
+        mailgun_api_key_param_name = f'{AppConfig.get_ssm_parameter_path()}/MailGunApiKey'
+        return AwsSsmClient.get_parameter('MAILGUN_API_KEY', mailgun_api_key_param_name)
 
+    @staticmethod
     def get_temp_folder_path():
         return os.environ.get('TEMP_FOLDER', '/tmp/ghl')
 

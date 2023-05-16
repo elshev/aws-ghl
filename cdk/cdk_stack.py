@@ -48,6 +48,7 @@ class GoHighLevelStack(Stack):
         # So, use boto3 that relies on .aws [default] profile as a workaround here
         account_id = boto3.client("sts").get_caller_identity()["Account"]
         s3_bucket_name = f'ghl-{account_id}-{ghl_subaccount_key}{stage_suffix}'
+        ssm_parameter_store_path = f'/{stage}/ghl/{ghl_account_key}/{ghl_subaccount_key}'
         
         # Define Environment Variables for Lambda functions
         env_vars = {
@@ -55,7 +56,8 @@ class GoHighLevelStack(Stack):
             'TEMP_FOLDER': f'/tmp/ghl-{ghl_account_key}-{ghl_subaccount_key}',
             'AWS_BUCKET_REGION': aws_bucket_region,
             'MAILGUN_API_URL': mailgun_api_url,
-            'MAILGUN_DOMAIN': mailgun_domain
+            'MAILGUN_DOMAIN': mailgun_domain,
+            'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path
         }
         
         # Create IAM role for Lambda functions
