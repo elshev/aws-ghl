@@ -8,7 +8,7 @@ $buckets = @{
     # 'ghl-489440259680-none' = $true;
 } 
 
-foreach ($bucketName in $buckets.get_Keys()) {
+foreach ($bucketName in $buckets.get_keys()) {
     Write-Output "Bucket Name = $bucketName";
     aws s3 rm "s3://$bucketName" --recursive --profile $awsProfileName;
 
