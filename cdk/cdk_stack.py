@@ -72,13 +72,21 @@ class GoHighLevelStack(Stack):
         )
 
         # Create IAM policy for Lambda logs
-        lambda_logs_policy = iam.PolicyStatement(
-            sid='LambdaLogs',
+        cloudwatch_logs_policy = iam.PolicyStatement(
+            sid='CloudWatchLogs',
             effect=iam.Effect.ALLOW,
             actions=[
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups",
                 "logs:DescribeLogStreams"
             ],
             resources=["arn:aws:logs:*:*:*"]
@@ -122,11 +130,21 @@ class GoHighLevelStack(Stack):
             resources=["arn:aws:s3:::*"]
         )
 
+        # Create IAM policy for S3 Bucket access
+        invoke_lambda_policy = iam.PolicyStatement(
+            sid='InvokeLambdaPolicy',
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "lambda:InvokeFunction",
+            ],
+            resources=["*"]
+        )
+
         # Add policies to the IAM role
-        ghl_lambda_role.add_to_policy(lambda_logs_policy)
+        ghl_lambda_role.add_to_policy(cloudwatch_logs_policy)
         ghl_lambda_role.add_to_policy(lambda_s3_object_policy)
         ghl_lambda_role.add_to_policy(lambda_s3_bucket_policy)
-
+        ghl_lambda_role.add_to_policy(invoke_lambda_policy)
 
         # Create Client S3 bucket
         s3_bucket = s3.Bucket(
