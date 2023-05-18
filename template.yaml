@@ -92,7 +92,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: src/
-      Handler: ghl_refresh_token.lambda_handler
+      Handler: ghl_refresh_token.handler
       Runtime: python3.9
       Role: !GetAtt GhlLambdaRole.Arn
       Description: Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store
@@ -110,7 +110,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      Handler: ghl_hook.lambda_handler
+      Handler: ghl_hook.handler
       Runtime: python3.9
       Role: !GetAtt GhlLambdaRole.Arn
       Architectures:

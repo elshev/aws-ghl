@@ -190,7 +190,7 @@ class GoHighLevelStack(Stack):
         ghl_refresh_token_function = lambda_.Function(
             self, "GhlRefreshTokenFunction",
             code=lambda_.Code.from_asset("src"),
-            handler="ghl_refresh_token.lambda_handler",
+            handler="ghl_refresh_token.handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(180),
@@ -212,7 +212,7 @@ class GoHighLevelStack(Stack):
         ghl_hook_function = lambda_.Function(
             self, "GhlHookFunction",
             code=lambda_.Code.from_asset("src"),
-            handler="ghl_hook.lambda_handler",
+            handler="ghl_hook.handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(180),

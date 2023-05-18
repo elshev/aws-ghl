@@ -96,6 +96,21 @@ class MgClient:
         
         return result
         
+    def raw_events_to_mg_events(self, raw_events):
+        result = []
+        items = raw_events.get('items')
+        if not items:
+            return result
+        for item in items:
+            mg_event = MgEvent.from_dict(item)
+            # Exclude service events
+            if mg_event.recipient.startswith('https://') or '/inbound_webhook' in mg_event.recipient:
+                continue
+            result.append(mg_event)
+
+        return result
+        
+
     def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT) -> Iterable[MgEvent]:
         """Get Message Events from MailGun for a period of time.
 
@@ -109,18 +124,12 @@ class MgClient:
         """
         
         self._logger.info('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
-        events = self.get_raw_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
+        raw_events = self.get_raw_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
         
-        result = []
-        for item in events['items']:
-            mg_event = MgEvent.from_dict(item)
-            # Exclude service events
-            if mg_event.recipient.startswith('https://') or '/inbound_webhook' in mg_event.recipient:
-                continue
-            result.append(mg_event)
+        result = self.raw_events_to_mg_events(raw_events=raw_events)
         
         return result
-        
+
 
     def get_message_urls(self, events_json, filter_event_type=MgEventType.ACCEPTED):
         """Extract message URLs from the events retrieved.
@@ -207,7 +216,11 @@ class MgClient:
 
 
     def get_messages_mime(self, begin_date, end_date=None, limit=DEFAULT_LIMIT) -> Iterable[MgMessage]:
-        """Get Messages from MailGun for a period of time in MIME format
+        """
+        Get Messages from MailGun for a period of time in MIME format
+        WARNING!!! Don't use this in production. 
+        1. The method doesn't support paging
+        2. The method can take a long time to execute in case of many events
 
         Args:
             begin_date (date): start of period

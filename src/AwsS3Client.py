@@ -98,9 +98,9 @@ class AwsS3Client:
 
     
     @staticmethod
-    def get_object_key_from_mg_message(message: MgMessage):
-        dt = datetime.fromtimestamp(message.timestamp)
-        folder_name = message.sender if message.is_reply_from_user else message.recipient
+    def get_object_key_from_mg_message(mg_message: MgMessage):
+        dt = datetime.fromtimestamp(mg_message.timestamp)
+        folder_name = mg_message.sender if mg_message.is_reply_from_user else mg_message.recipient
         return f'{folder_name}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
     
     
@@ -133,11 +133,11 @@ class AwsS3Client:
         return output_file_path
         
 
-    def upload_message_to_s3(self, message: MgMessage):
+    def upload_message_to_s3(self, mg_message: MgMessage):
         bucket_name = self.check_bucket()
-        key_name = AwsS3Client.get_object_key_from_mg_message(message=message)
+        key_name = AwsS3Client.get_object_key_from_mg_message(mg_message=mg_message)
         s3_path = f'{bucket_name}/{key_name}'
-        tmp_file_path = AwsS3Client.save_message_as_mime(message=message)
+        tmp_file_path = AwsS3Client.save_message_as_mime(message=mg_message)
 
         AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
         try:

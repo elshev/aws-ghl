@@ -130,8 +130,8 @@ def main():
     
     mg_process_mailgun_events.handler({}, None)
 
-    # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
-    # ghl_refresh_token.lambda_handler(event, None)
+    # ghl_hook.handler(conversationUnreadUpdateBody, None)
+    # ghl_refresh_token.handler(event, None)
 
     logging.debug('FINISH!!!')
 

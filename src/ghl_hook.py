@@ -3,6 +3,7 @@ import json
 from AwsS3Client import AwsS3Client
 from ConversationRepository import ConversationRepository
 from ConversationUnreadUpdate import ConversationUnreadUpdate
+from Util import Util
 
 
 logger = logging.getLogger()
@@ -16,10 +17,9 @@ def get_body_from_event(event):
     body = json.loads(value) if isinstance(value, str) else value
     return body
 
-def lambda_handler(event, context):
-    logger.info('Event: %s', event)
-    if not context is None:
-        logger.info('Context: %s', context)
+def handler(event, context):
+    Util.log_lambda_event(event, context)
+        
     body = get_body_from_event(event)
     if body != event:
         logger.info('Content: %s', body)

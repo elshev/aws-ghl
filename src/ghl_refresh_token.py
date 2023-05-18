@@ -8,6 +8,7 @@ import boto3
 import urllib3
 
 from AppConfig import AppConfig
+from Util import Util
 
 
 refresh_token_ssm_parameter_name = f'{AppConfig.get_ssm_parameter_path()}/RefreshToken'
@@ -120,9 +121,7 @@ def ghl_refresh_token():
     return result
 
 
-def lambda_handler(event, context):
-    logger.info('Event: %s', event)
-    if not context is None:
-        logger.info('Context: %s', context)
+def handler(event, context):
+    Util.log_lambda_event(event, context)
 
     ghl_refresh_token()

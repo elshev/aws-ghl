@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Iterable
@@ -5,6 +6,13 @@ from typing import Iterable
 
 class Util:
     
+    @staticmethod
+    def log_lambda_event(event, context):
+        logging.info('Event: %s', event)
+        if not context is None:
+            logging.info('Context: %s', context)
+
+        
     @staticmethod
     def get_dict_value(dic: dict, keys: Iterable[str]):
         """

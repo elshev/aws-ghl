@@ -43,9 +43,7 @@ def push_events_to_queue(raw_events: dict):
 
 
 def handler(event, context):
-    logger.info('Event: %s', event)
-    if not context is None:
-        logger.info('Context: %s', context)
+    Util.log_lambda_event(event, context)
 
     raw_events = get_raw_events()
     
