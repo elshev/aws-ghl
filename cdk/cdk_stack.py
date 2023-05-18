@@ -6,7 +6,7 @@ from aws_cdk import (
     Stack,
     aws_iam as iam,
     aws_s3 as s3,
-    aws_lambda as _lambda,
+    aws_lambda as lambda_,
     aws_events as events,
     aws_events_targets as event_targets,
     aws_apigateway as apigw,
@@ -22,7 +22,11 @@ class GoHighLevelStack(Stack):
     @property
     def python_runtime(self):
         return self._python_runtime
-
+    
+    @property
+    def lambda_architecture(self):
+        return self._lambda_architecture
+    
     def __init__(self, scope: Construct, config_file_path: str, **kwargs) -> None:
         
         config_json: dict = {}
@@ -38,7 +42,8 @@ class GoHighLevelStack(Stack):
 
         super().__init__(scope, construct_id, **kwargs)
 
-        self._python_runtime = _lambda.Runtime.PYTHON_3_9
+        self._python_runtime = lambda_.Runtime.PYTHON_3_9
+        self._lambda_architecture = lambda_.Architecture.X86_64
 
         # Load other settings from config
         aws_bucket_region = config_json.get('AwsBucketRegion', 'us-east-1')
@@ -182,15 +187,15 @@ class GoHighLevelStack(Stack):
         )
 
         # Create the Lambda function for refreshing Access and Refresh tokens
-        ghl_refresh_token_function = _lambda.Function(
+        ghl_refresh_token_function = lambda_.Function(
             self, "GhlRefreshTokenFunction",
-            code=_lambda.Code.from_asset("src"),
+            code=lambda_.Code.from_asset("src"),
             handler="ghl_refresh_token.lambda_handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(180),
             description="Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store",
-            architecture=_lambda.Architecture.X86_64,
+            architecture=self.lambda_architecture,
         )
 
         # Add a schedule event to trigger the token refresh function
@@ -204,15 +209,15 @@ class GoHighLevelStack(Stack):
 
 
         # Create the Lambda function as a WebHook for Conversation Unread event
-        ghl_hook_function = _lambda.Function(
+        ghl_hook_function = lambda_.Function(
             self, "GhlHookFunction",
-            code=_lambda.Code.from_asset("src"),
+            code=lambda_.Code.from_asset("src"),
             handler="ghl_hook.lambda_handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(180),
             description="WebHook for GoHighLevel ConversationUnread event",
-            architecture=_lambda.Architecture.X86_64,
+            architecture=self.lambda_architecture,
             environment=env_vars,
         )
 
@@ -232,28 +237,27 @@ class GoHighLevelStack(Stack):
 
 
         # Create the Lambda function for MailGun polling
-        mg_store_messages_function = _lambda.Function(
+        mg_process_mailgun_events_function = lambda_.Function(
             self, 
-            id="MgStoreMessagesFunction",
-            code=_lambda.Code.from_asset("src"),
-            handler="mg_store_messages.handler",
+            id="MgProcessMailgunEventsFunction",
+            code=lambda_.Code.from_asset("src"),
+            handler="mg_process_mailgun_events.handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
-            timeout=Duration.seconds(300),
-            description="Gets events from MailGun and then stores messages to S3 bucket",
-            architecture=_lambda.Architecture.X86_64,
+            timeout=Duration.seconds(900),
+            description="Gets events from MailGun and then push them into mailgun-events queue",
+            architecture=self.lambda_architecture,
             environment=env_vars,
         )
 
         # Add a schedule event to trigger the mg_store_messages function
-        mg_store_messages_schedule_rule = events.Rule(
-            self, 'MgStoreMessagesSchedule',
+        mg_process_mailgun_events_schedule_rule = events.Rule(
+            self, 'MgProcessMailgunEventsSchedule',
             schedule=events.Schedule.rate(Duration.hours(6)),
             enabled=True,
-            description='A schedule for polling MailGun, getting messages from there, and store them in S3'
+            description='A schedule for polling MailGun to get messages from there'
         )
-        mg_store_messages_schedule_rule.add_target(event_targets.LambdaFunction(mg_store_messages_function))
-
+        mg_process_mailgun_events_schedule_rule.add_target(event_targets.LambdaFunction(mg_process_mailgun_events_function))
 
 
         # Resource group
@@ -270,6 +274,7 @@ class GoHighLevelStack(Stack):
             resource_group_name=app_resource_group.name,
             auto_configuration_enabled=True
         )
+
 
         # Outputs
         CfnOutput(
@@ -288,16 +293,16 @@ class GoHighLevelStack(Stack):
 
         CfnOutput(
             self, 
-            id='GhlRefreshTokenFunctionArn',
-            value=ghl_refresh_token_function.function_arn,
-            description='GhlRefreshToken Lambda Function ARN'
+            id='GhlLambdaIamRoleArn',
+            value=ghl_lambda_role.role_arn,
+            description='IAM Role for Lambda functions'
         )
 
         CfnOutput(
             self, 
-            id='GhlRefreshTokenFunctionIamRoleArn',
-            value=ghl_refresh_token_function.role.role_arn,
-            description='IAM Role for GhlHook function'
+            id='GhlRefreshTokenFunctionArn',
+            value=ghl_refresh_token_function.function_arn,
+            description='GhlRefreshToken Lambda Function ARN'
         )
 
         CfnOutput(
@@ -309,21 +314,7 @@ class GoHighLevelStack(Stack):
 
         CfnOutput(
             self, 
-            id='GhlHookFunctionIamRoleArn',
-            value=ghl_hook_function.role.role_arn,
-            description='IAM Role for GhlHook function'
-        )
-
-        CfnOutput(
-            self, 
-            id='MgStoreMessagesFunctionArn',
-            value=mg_store_messages_function.function_arn,
+            id='MgProcessMailgunEventsFunctionArn',
+            value=mg_process_mailgun_events_function.function_arn,
             description='MgStoreMessages Lambda Function ARN'
-        )
-
-        CfnOutput(
-            self, 
-            id='MgStoreMessagesFunctionIamRoleArn',
-            value=mg_store_messages_function.role.role_arn,
-            description='IAM Role for MgStoreMessages function'
         )
