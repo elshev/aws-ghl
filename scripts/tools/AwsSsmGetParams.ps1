@@ -17,7 +17,7 @@ $stage = $json.Stage;
 $ghlAccountKey = $json.GhlAccountKey;
 $ghlSubaccountKey = $json.ghlSubaccountKey;
 
-$ssmStoreParameterPath = "/${stage}/ghl/${ghlAccountKey}/${ghlSubaccountKey}"
+$ssmStoreParameterPath = "/${stage}-ghl-${ghlAccountKey}-${ghlSubaccountKey}"
 
 function PrintSsmValue($name) {
     $path = "${ssmStoreParameterPath}/$name"

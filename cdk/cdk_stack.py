@@ -32,8 +32,9 @@ class GoHighLevelStack(Stack):
         ghl_subaccount_key = config_json['GhlSubAccountKey']
         stage = config_json.get('Stage', 'dev')
         is_prod = stage == 'prod'
-        stage_suffix = '' if is_prod else f'-{stage}'
-        construct_id = f'ghl-{ghl_account_key}-{ghl_subaccount_key}{stage_suffix}'
+        stage_prefix = '' if is_prod else f'{stage}-'
+        aws_unique_name = f'{stage_prefix}ghl-{ghl_account_key}-{ghl_subaccount_key}'
+        construct_id = aws_unique_name
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -48,8 +49,10 @@ class GoHighLevelStack(Stack):
         # but we don't know the AWS Account ID until the deployment
         # So, use boto3 that relies on .aws [default] profile as a workaround here
         account_id = boto3.client("sts").get_caller_identity()["Account"]
-        s3_bucket_name = f'ghl-{account_id}-{ghl_subaccount_key}{stage_suffix}'
-        ssm_parameter_store_path = f'/{stage}/ghl/{ghl_account_key}/{ghl_subaccount_key}'
+        s3_bucket_name = f'{aws_unique_name}-{account_id}'
+        
+        ssm_parameter_store_path = f'/{aws_unique_name}'
+        sqs_queue_prefix = aws_unique_name
         
         # Define Environment Variables for Lambda functions
         env_vars = {
@@ -58,7 +61,8 @@ class GoHighLevelStack(Stack):
             'AWS_BUCKET_REGION': aws_bucket_region,
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
-            'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path
+            'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path,
+            'SQS_QUEUE_PREFIX': ssm_parameter_store_path
         }
         
         # Create IAM role for Lambda functions

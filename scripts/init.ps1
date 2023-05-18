@@ -17,13 +17,14 @@ $refreshToken = '';
 # MailGun
 $mailgunApiKey = '';
 
+
 # Read settings from config file
 $json = Get-Content $configFile | Out-String | ConvertFrom-Json
 $stage = $json.Stage
 $ghlAccountKey = $json.GhlAccountKey
 $ghlSubaccountKey = $json.ghlSubaccountKey
 
-$ssmStoreParameterPath = "/${stage}/ghl/${ghlAccountKey}/${ghlSubaccountKey}"
+$ssmStoreParameterPath = "/${stage}-ghl-${ghlAccountKey}-${ghlSubaccountKey}"
 
 function PutParameter($name, $value, $type) {
     $path = "${ssmStoreParameterPath}/$name"

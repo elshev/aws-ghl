@@ -17,6 +17,10 @@ class AppConfig:
         return os.environ['SSM_PARAMETER_STORE_PATH']
 
     @staticmethod
+    def get_sqs_queue_prefix():
+        return os.environ['SQS_QUEUE_PREFIX']
+
+    @staticmethod
     def get_ghl_base_url():
         return 'https://services.leadconnectorhq.com'
 

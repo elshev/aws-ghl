@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import json
 from typing import Iterable
+from AwsSqsClient import AwsSqsClient
 from MgClient import MgClient
 from AppConfig import AppConfig
 from MgEvent import MgEvent
@@ -34,8 +35,12 @@ def push_events_to_queue(raw_events: dict):
     items = raw_events.get('items')
     if not items:
         return False
+    
+    sqs_client = AwsSqsClient()
+    sqs_client.send_message_to_mailgun_events_queue(items)
+
     return True
-        
+
 
 def handler(event, context):
     logger.info('Event: %s', event)
