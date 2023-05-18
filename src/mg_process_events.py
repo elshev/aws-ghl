@@ -13,16 +13,19 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def get_raw_events(begin_date=None) -> Iterable[MgEvent]:
+def get_raw_events(begin_date=None):
     if not begin_date:
         begin_date = datetime.utcnow().date() + timedelta(days=-1)
     end_date = datetime.utcnow().date() + timedelta(days=1)
  
     mg_client = MgClient()
-    events = mg_client.get_events(begin_date=begin_date, end_date=end_date, limit=100)
+    events = mg_client.get_raw_events(begin_date=begin_date, end_date=end_date, limit=100)
 
     return events
 
+
+def push_events_to_queue(raw_events: dict):
+    pass
 
 def handler(event, context):
     logger.info('Event: %s', event)
