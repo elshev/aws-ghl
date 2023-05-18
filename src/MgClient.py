@@ -17,6 +17,7 @@ class MgEventType:
     DELIVERED = 'delivered'
     OPENED = 'opened'
     
+DEFAULT_LIMIT = 100
 
 class MgClient:
 
@@ -65,19 +66,9 @@ class MgClient:
         return common_headers
 
 
-    def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=300) -> Iterable[MgEvent]:
-        """Get Message Events from MailGun for a period of time.
-
-        Args:
-            begin_date (date): start of period
-            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
-
-        Returns:
-            dict: dictionary: "eventId": "Event"
-            See https://documentation.mailgun.com/en/latest/api-events.html#events for details
-        """
+    def get_raw_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT):
         
-        self._logger.info('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
+        self._logger.info('get_events_response(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
@@ -93,14 +84,31 @@ class MgClient:
         events_url = f'{self._mg_domain_url}/events'
         body = urlencode(request_body)
         url = f'{events_url}?{body}'
-        self._logger.info('get_events(): Making API Call to %s ...', events_url)
+        self._logger.info('get_events_response(): Making API Call to %s ...', events_url)
         http = urllib3.PoolManager(headers=self.get_common_headers())
         response = http.request('GET', url=url)
-        self._log_response(response)
-        events_json = json.loads(response.data)
+        # self._log_response(response)
+        result = json.loads(response.data)
+        
+        return result
+        
+    def get_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT) -> Iterable[MgEvent]:
+        """Get Message Events from MailGun for a period of time.
+
+        Args:
+            begin_date (date): start of period
+            end_date (date, optional): end of period. If not defined the current time will be taken. Defaults to None.
+
+        Returns:
+            dict: dictionary: "eventId": "Event"
+            See https://documentation.mailgun.com/en/latest/api-events.html#events for details
+        """
+        
+        self._logger.info('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
+        events = self.get_raw_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
         
         result = []
-        for item in events_json['items']:
+        for item in events['items']:
             mg_event = MgEvent.from_dict(item)
             # Exclude service events
             if mg_event.recipient.startswith('https://') or '/inbound_webhook' in mg_event.recipient:
@@ -166,7 +174,7 @@ class MgClient:
         
         return result
 
-    def get_messages(self, begin_date, end_date=None, limit=300):
+    def get_messages(self, begin_date, end_date=None, limit=DEFAULT_LIMIT):
         """
         First calls get_events() to get Message Events from MailGun for a period of time.
         Then get Message URLs from event and get Messages from MailGun for each URL.
@@ -194,7 +202,7 @@ class MgClient:
         return result
 
 
-    def get_messages_mime(self, begin_date, end_date=None, limit=300) -> Iterable[MgMessage]:
+    def get_messages_mime(self, begin_date, end_date=None, limit=DEFAULT_LIMIT) -> Iterable[MgMessage]:
         """Get Messages from MailGun for a period of time in MIME format
 
         Args:
@@ -209,7 +217,7 @@ class MgClient:
         filter_event_type = MgEventType.ACCEPTED
         mg_events = self.get_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
 
-        # Extract Message URLs from events json
+        # For each event get message
         result = []
         for mg_event in mg_events:
             message = self.get_mime_message(mg_event=mg_event)

@@ -12,6 +12,7 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
+    aws_sqs as sqs,
 )
 import boto3
 
@@ -130,7 +131,7 @@ class GoHighLevelStack(Stack):
             resources=["arn:aws:s3:::*"]
         )
 
-        # Create IAM policy for S3 Bucket access
+        # Create IAM policy for Invoking Lambda Functions
         invoke_lambda_policy = iam.PolicyStatement(
             sid='InvokeLambdaPolicy',
             effect=iam.Effect.ALLOW,
@@ -139,12 +140,27 @@ class GoHighLevelStack(Stack):
             ],
             resources=["*"]
         )
+        
+        # Create IAM policy for SQSInvoking Lambda Functions
+        sqs_process_messages_policy = iam.PolicyStatement(
+            sid='SqsProcessMessagesPolicy',
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "sqs:SendMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:ReceiveMessage"
+            ],
+            resources=["arn:aws:sqs:::ghl_*"]
+        )
+        
 
         # Add policies to the IAM role
         ghl_lambda_role.add_to_policy(cloudwatch_logs_policy)
         ghl_lambda_role.add_to_policy(lambda_s3_object_policy)
         ghl_lambda_role.add_to_policy(lambda_s3_bucket_policy)
         ghl_lambda_role.add_to_policy(invoke_lambda_policy)
+        ghl_lambda_role.add_to_policy(sqs_process_messages_policy)
 
         # Create Client S3 bucket
         s3_bucket = s3.Bucket(
@@ -153,6 +169,13 @@ class GoHighLevelStack(Stack):
             bucket_name=s3_bucket_name
         )
 
+        # Create an SQS queue
+        queue = sqs.Queue(
+            self,
+            id='MyQueue',
+            queue_name='mailgun-events',
+            visibility_timeout=Duration.seconds(300)
+        )
 
         # Create the Lambda function for refreshing Access and Refresh tokens
         ghl_refresh_token_function = _lambda.Function(

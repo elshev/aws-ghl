@@ -11,6 +11,7 @@ from MgClient import MgClient
 from MgMessage import MgMessage
 from Util import Util
 import mg_store_messages
+import mg_process_events
 import ghl_refresh_token
 import ghl_hook
 
@@ -127,7 +128,7 @@ def main():
     reply_with_image_attachment_url = 'https://storage-us-west1.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQUlwG92Py50ElpITJuKKR_LQV1AYQ=='
     message_url = reply_with_image_attachment_url
     
-    mg_store_messages.handler({}, None)
+    mg_process_events.handler({}, None)
 
     # ghl_hook.lambda_handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.lambda_handler(event, None)
