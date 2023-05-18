@@ -37,7 +37,7 @@ def push_events_to_queue(raw_events: dict):
         return False
     
     sqs_client = AwsSqsClient()
-    sqs_client.send_message_to_mailgun_events_queue(items)
+    sqs_client.send_to_mailgun_events_queue(items)
 
     return True
 

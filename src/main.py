@@ -10,7 +10,7 @@ from AwsStsClient import AwsStsClient
 from MgClient import MgClient
 from MgMessage import MgMessage
 from Util import Util
-import mg_store_messages
+import mg_process_mailgun_events_queue
 import mg_process_mailgun_events
 import ghl_refresh_token
 import ghl_hook

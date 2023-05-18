@@ -17,6 +17,10 @@ class AppConfig:
         return os.environ['SSM_PARAMETER_STORE_PATH']
 
     @staticmethod
+    def get_sqs_base_url():
+        return os.environ['SQS_BASE_URL']
+
+    @staticmethod
     def get_sqs_queue_prefix():
         return os.environ['SQS_QUEUE_PREFIX']
 
