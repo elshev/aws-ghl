@@ -66,9 +66,18 @@ class MgClient:
         return common_headers
 
 
-    def get_raw_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT):
+    def get_raw_events_from_url(self, url):
+        self._logger.info('get_raw_events_from_url(): Making API Call to %s ...', url)
+        http = urllib3.PoolManager(headers=self.get_common_headers())
+        response = http.request('GET', url=url)
+        # self._log_response(response)
+        result = json.loads(response.data)
         
-        self._logger.info('get_events_response(): Start Date = %s, End Date = %s', begin_date, end_date)
+        return result
+
+
+    def get_raw_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT):
+        self._logger.info('get_raw_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
@@ -81,14 +90,9 @@ class MgClient:
             end_timestamp = MgClient._get_timestamp(end_date)
             request_body['end'] = end_timestamp
 
-        events_url = f'{self._mg_domain_url}/events'
         body = urlencode(request_body)
-        url = f'{events_url}?{body}'
-        self._logger.info('get_events_response(): Making API Call to %s ...', events_url)
-        http = urllib3.PoolManager(headers=self.get_common_headers())
-        response = http.request('GET', url=url)
-        # self._log_response(response)
-        result = json.loads(response.data)
+        url = f'{self._mg_domain_url}/events?{body}'
+        result = self.get_raw_events_from_url(url)
         
         return result
         

@@ -13,33 +13,41 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def get_raw_events(begin_date=None):
-    if not begin_date:
-        begin_date = datetime.utcnow().date() + timedelta(days=-1)
-    end_date = datetime.utcnow().date() + timedelta(days=1)
- 
+def get_raw_events(url=None, begin_date=None):
     mg_client = MgClient()
-    events = mg_client.get_raw_events(begin_date=begin_date, end_date=end_date, limit=100)
+    result = {}
+    if (url):
+        result = mg_client.get_raw_events_from_url(url=url)
+    else:
+        if not begin_date:
+            begin_date = datetime.utcnow().date() + timedelta(days=-1)
+        end_date = datetime.utcnow().date() + timedelta(days=1)
 
-    return events
+        result = mg_client.get_raw_events(begin_date=begin_date, end_date=end_date, limit=100)
+
+    return result
 
 
 def push_events_to_queue(raw_events: dict):
-    pass
+    if not raw_events:
+        return False
+    items = raw_events.get('items')
+    if not items:
+        return False
+    return True
+        
 
 def handler(event, context):
     logger.info('Event: %s', event)
     if not context is None:
         logger.info('Context: %s', context)
 
-    events = get_raw_events()
-    result = []
-    for item in events['items']:
-        mg_event = MgEvent.from_dict(item)
-        # Exclude service events
-        if mg_event.recipient.startswith('https://') or '/inbound_webhook' in mg_event.recipient:
-            continue
-        result.append(mg_event)
+    raw_events = get_raw_events()
     
-    return result
-    
+    while True:
+        if not push_events_to_queue(raw_events=raw_events):
+            break
+        next_url = Util.get_dict_value(raw_events, ['paging', 'next'])
+        if not next_url:
+            break
+        raw_events = get_raw_events(next_url)
