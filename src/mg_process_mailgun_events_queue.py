@@ -33,7 +33,7 @@ def handler(event, context):
     logging.info('Storing to S3 Bucket...')
     s3_client = AwsS3Client()
     for mg_event in mg_events:
-        mg_message = MgClient.get_mime_message(mg_event=mg_event)
+        mg_message = mg_client.get_mime_message(mg_event)
         s3_client.upload_message_to_s3(mg_message)
     
     # Remove message from SQS

@@ -98,9 +98,9 @@ class MgClient:
         
     def raw_events_to_mg_events(self, raw_events):
         result = []
+        items = raw_events
         if isinstance(raw_events, str):
-            raw_events = json.loads(raw_events)
-        items = raw_events.get('items')
+            items = json.loads(raw_events)
         if not items:
             return result
         for item in items:
@@ -128,7 +128,8 @@ class MgClient:
         self._logger.info('get_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         raw_events = self.get_raw_events(begin_date=begin_date, end_date=end_date, filter_event_type=filter_event_type, limit=limit)
         
-        result = self.raw_events_to_mg_events(raw_events=raw_events)
+        raw_event_items = raw_events.get('items')
+        result = self.raw_events_to_mg_events(raw_events=raw_event_items)
         
         return result
 
@@ -175,6 +176,7 @@ class MgClient:
         return result
 
     def get_mime_message(self, mg_event: MgEvent) -> MgMessage:
+        self._logger.info('get_message_mime(): MgEvent:\n%s', json.dumps(mg_event, default=vars, indent=2))
         self._logger.info('get_message_mime(): Making API Call to %s ...', mg_event.message_url)
         
         headers = self.get_common_headers()
