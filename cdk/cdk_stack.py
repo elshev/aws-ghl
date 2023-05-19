@@ -14,7 +14,6 @@ from aws_cdk import (
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
     aws_sqs as sqs,
-    aws_sqs as sqs,
 )
 import boto3
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
@@ -278,11 +277,12 @@ class GoHighLevelStack(Stack):
             self,
             id='MailGunEventsQueue',
             queue_name=f'{sqs_queue_prefix}-{SQS_MAILGUN_EVENTS_QUEUE_NAME}',
-            visibility_timeout=Duration.seconds(300)
+            visibility_timeout=Duration.seconds(300),
+            receive_message_wait_time=Duration.seconds(20)
         )
 
         mg_process_mailgun_events_queue_function.add_event_source(event_sources.SqsEventSource(
-            mailgun_events_queue,
+            queue=mailgun_events_queue,
             batch_size=1,
             max_batching_window=Duration.minutes(5),
             report_batch_item_failures=True

@@ -15,9 +15,14 @@ def handler(event, context):
     logging.info('Getting a message from the Queue...')
     sqs_client = AwsSqsClient()
     sqs_response = sqs_client.get_from_mailgun_events_queue()
-    message = sqs_response['Messages'][0]
-    receipt_handle = message['ReceiptHandle']
-    raw_events = message['data']
+    messages = sqs_response.get('Messages')
+    raw_events = {}
+    receipt_handle = None
+    if messages:
+        logging.info('Message was found in SQS response.')
+        message = sqs_response['Messages'][0]
+        receipt_handle = message['ReceiptHandle']
+        raw_events = message['Body']
 
     # Convert raw events dict to a list of MgEvent
     logging.info('Processing events...')
@@ -32,7 +37,10 @@ def handler(event, context):
         s3_client.upload_message_to_s3(mg_message)
     
     # Remove message from SQS
-    logging.info('Removing a message from the queue (ReceiptHandle = "%s")...', receipt_handle)
-    sqs_client.delete_from_mailgun_events_queue(receipt_handle)
+    if receipt_handle:
+        logging.info('Removing a message from the queue (ReceiptHandle = "%s")...', receipt_handle)
+        sqs_client.delete_from_mailgun_events_queue(receipt_handle)
+    else:
+        logging.info('ReceiptHandle is empty. Nothing to remove.', receipt_handle)
 
     logging.info('Successfully completed!')

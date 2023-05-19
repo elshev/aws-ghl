@@ -98,6 +98,8 @@ class MgClient:
         
     def raw_events_to_mg_events(self, raw_events):
         result = []
+        if isinstance(raw_events, str):
+            raw_events = json.loads(raw_events)
         items = raw_events.get('items')
         if not items:
             return result
