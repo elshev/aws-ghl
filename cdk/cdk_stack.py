@@ -9,13 +9,15 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_events as events,
     aws_events_targets as event_targets,
+    aws_lambda_event_sources as event_sources,
     aws_apigateway as apigw,
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
     aws_sqs as sqs,
+    aws_sqs as sqs,
 )
 import boto3
-
+from aws_cdk.aws_lambda_event_sources import SqsEventSource
 
 class GoHighLevelStack(Stack):
 
@@ -59,6 +61,8 @@ class GoHighLevelStack(Stack):
         ssm_parameter_store_path = f'/{aws_unique_name}'
         sqs_queue_prefix = aws_unique_name
         
+        SQS_MAILGUN_EVENTS_QUEUE_NAME = 'mailgun-events'
+
         # Define Environment Variables for Lambda functions
         env_vars = {
             'GHL_BUCKET_NAME': s3_bucket_name,
@@ -67,7 +71,8 @@ class GoHighLevelStack(Stack):
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
             'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path,
-            'SQS_QUEUE_PREFIX': ssm_parameter_store_path
+            'SQS_QUEUE_PREFIX': sqs_queue_prefix,
+            'SQS_MAILGUN_EVENTS_QUEUE_NAME': SQS_MAILGUN_EVENTS_QUEUE_NAME
         }
         
         # Create IAM role for Lambda functions
@@ -178,13 +183,6 @@ class GoHighLevelStack(Stack):
             bucket_name=s3_bucket_name
         )
 
-        # Create an SQS queue
-        queue = sqs.Queue(
-            self,
-            id='MyQueue',
-            queue_name='mailgun-events',
-            visibility_timeout=Duration.seconds(300)
-        )
 
         # Create the Lambda function for refreshing Access and Refresh tokens
         ghl_refresh_token_function = lambda_.Function(
@@ -252,12 +250,43 @@ class GoHighLevelStack(Stack):
 
         # Add a schedule event to trigger the mg_store_messages function
         mg_process_mailgun_events_schedule_rule = events.Rule(
-            self, 'MgProcessMailgunEventsSchedule',
-            schedule=events.Schedule.rate(Duration.hours(6)),
+            self,
+            id='MgProcessMailgunEventsSchedule',
+            schedule=events.Schedule.rate(Duration.minutes(15)),
             enabled=True,
             description='A schedule for polling MailGun to get messages from there'
         )
         mg_process_mailgun_events_schedule_rule.add_target(event_targets.LambdaFunction(mg_process_mailgun_events_function))
+
+
+        # Create the Lambda function for process SQS queue with MailGun events
+        mg_process_mailgun_events_queue_function = lambda_.Function(
+            self, 
+            id="MgProcessMailgunEventsQueueFunction",
+            code=lambda_.Code.from_asset("src"),
+            handler="mg_process_mailgun_events_queue.handler",
+            runtime=self.python_runtime,
+            role=ghl_lambda_role,
+            timeout=Duration.seconds(600),
+            description="Gets MailGun events from SQS queue and stores them to S3",
+            architecture=self.lambda_architecture,
+            environment=env_vars,
+        )
+
+        # Create an SQS queue
+        mailgun_events_queue = sqs.Queue(
+            self,
+            id='MailGunEventsQueue',
+            queue_name=f'{sqs_queue_prefix}-{SQS_MAILGUN_EVENTS_QUEUE_NAME}',
+            visibility_timeout=Duration.seconds(600)
+        )
+
+        mg_process_mailgun_events_queue_function.add_event_source(event_sources.SqsEventSource(
+            mailgun_events_queue,
+            batch_size=1,
+            max_batching_window=Duration.minutes(5),
+            report_batch_item_failures=True
+        ))
 
 
         # Resource group
@@ -317,4 +346,11 @@ class GoHighLevelStack(Stack):
             id='MgProcessMailgunEventsFunctionArn',
             value=mg_process_mailgun_events_function.function_arn,
             description='MgStoreMessages Lambda Function ARN'
+        )
+
+        CfnOutput(
+            self, 
+            id='MailGunQueueEventsUrl',
+            value=mailgun_events_queue.queue_url,
+            description='MailGun Events Queue URL'
         )

@@ -19,7 +19,11 @@ def handler(event, context):
     mg_client = MgClient()
     mg_events = mg_client.raw_events_to_mg_events(raw_events)
     
+    # Store MgMessage as MIME to S3
     s3_client = AwsS3Client()
     for mg_event in mg_events:
         mg_message = MgClient.get_mime_message(mg_event=mg_event)
         s3_client.upload_message_to_s3(mg_message)
+    
+    # Remove message from SQS
+    sqs_client.delete_from_mailgun_events_queue()
