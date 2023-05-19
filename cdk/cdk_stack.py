@@ -267,7 +267,7 @@ class GoHighLevelStack(Stack):
             handler="mg_process_mailgun_events_queue.handler",
             runtime=self.python_runtime,
             role=ghl_lambda_role,
-            timeout=Duration.seconds(600),
+            timeout=Duration.seconds(300),
             description="Gets MailGun events from SQS queue and stores them to S3",
             architecture=self.lambda_architecture,
             environment=env_vars,
@@ -278,7 +278,7 @@ class GoHighLevelStack(Stack):
             self,
             id='MailGunEventsQueue',
             queue_name=f'{sqs_queue_prefix}-{SQS_MAILGUN_EVENTS_QUEUE_NAME}',
-            visibility_timeout=Duration.seconds(600)
+            visibility_timeout=Duration.seconds(300)
         )
 
         mg_process_mailgun_events_queue_function.add_event_source(event_sources.SqsEventSource(

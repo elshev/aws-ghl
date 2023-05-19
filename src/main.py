@@ -4,6 +4,7 @@ import json
 import logging
 import logging.config
 import http.client
+import time
 from AppConfig import AppConfig
 from AwsS3Client import AwsS3Client
 from AwsStsClient import AwsStsClient
@@ -129,6 +130,10 @@ def main():
     message_url = reply_with_image_attachment_url
     
     mg_process_mailgun_events.handler({}, None)
+    sleep_seconds = 3
+    logging.info('Sleeping for = %s seconds', sleep_seconds)
+    time.sleep(sleep_seconds)
+    # mg_process_mailgun_events_queue.handler({}, None)
 
     # ghl_hook.handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.handler(event, None)

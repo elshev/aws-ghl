@@ -17,12 +17,12 @@ class AppConfig:
         return os.environ['SSM_PARAMETER_STORE_PATH']
 
     @staticmethod
-    def get_sqs_base_url():
-        return os.environ['SQS_BASE_URL']
-
-    @staticmethod
     def get_sqs_queue_prefix():
         return os.environ['SQS_QUEUE_PREFIX']
+
+    @staticmethod
+    def get_mailgun_events_queue_name():
+        return os.environ.get('SQS_MAILGUN_EVENTS_QUEUE_NAME', 'mailgun-events')
 
     @staticmethod
     def get_ghl_base_url():
