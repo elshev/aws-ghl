@@ -128,12 +128,21 @@ def main():
     image_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQXnBYIdw7zaAqhGtojzqVlAljyQZA=='
     reply_with_image_attachment_url = 'https://storage-us-west1.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQUlwG92Py50ElpITJuKKR_LQV1AYQ=='
     message_url = reply_with_image_attachment_url
-    
-    mg_process_mailgun_events.handler({}, None)
+
+    begin_date = datetime.utcnow().date() + timedelta(days=-1)
+    end_date = datetime.utcnow().date() + timedelta(days=1)
+    event = {
+        'begin_date': begin_date.isoformat(),
+        'end_date': end_date.isoformat()
+    }
+
+    mg_process_mailgun_events.handler(event=event, context=None)
+
     sleep_seconds = 3
     logging.info('Sleeping for %s seconds', sleep_seconds)
     time.sleep(sleep_seconds)
-    mg_process_mailgun_events_queue.handler({}, None)
+    
+    mg_process_mailgun_events_queue.handler(event={}, context=None)
 
     # ghl_hook.handler(conversationUnreadUpdateBody, None)
     # ghl_refresh_token.handler(event, None)
