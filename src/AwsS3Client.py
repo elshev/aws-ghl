@@ -58,6 +58,10 @@ class AwsS3Client:
         return file_path
 
     
+    @staticmethod
+    def get_bucket_name():
+        return AppConfig.get_aws_bucket_name()
+    
     def check_bucket(self):
         """Checks if a bucket exists. If not creates it
 
@@ -65,7 +69,7 @@ class AwsS3Client:
             str: Bucket Name.
         """
         # try to get a bucket name from cache first
-        bucket_name = AppConfig.get_aws_bucket_name()
+        AwsS3Client.get_bucket_name()
         #         
         if not AwsS3Client._bucket_exists:
             bucket_name = AppConfig.get_aws_bucket_name()
@@ -88,8 +92,24 @@ class AwsS3Client:
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
             AwsS3Client._bucket_exists = True
+
         return bucket_name
+
     
+    def is_object_exits(self, object_key):
+        response = self._s3_client.list_objects_v2(
+            Bucket=AwsS3Client.get_bucket_name(),
+            Prefix=object_key,
+            MaxKeys=1
+        )
+        if not 'Contents' in response:
+            return False
+        if not len(response['Contents']) > 0:
+            return False
+        if not 'Key' in response['Contents'][0]:
+            return False
+        return response['Contents'][0]['Key'] == object_key
+
     
     @staticmethod
     def get_object_key_from_contact(contact_id: str):
@@ -135,13 +155,17 @@ class AwsS3Client:
 
     def upload_message_to_s3(self, mg_message: MgMessage):
         bucket_name = self.check_bucket()
-        key_name = AwsS3Client.get_object_key_from_mg_message(mg_message=mg_message)
-        s3_path = f'{bucket_name}/{key_name}'
+        object_key = AwsS3Client.get_object_key_from_mg_message(mg_message=mg_message)
+        s3_path = f'{bucket_name}/{object_key}'
+        if self.is_object_exits(object_key):
+            AwsS3Client.logger.info('Object "%s" already exists in S3 bucket "%s". Skip saving it.', object_key, bucket_name)
+            return True
+
         tmp_file_path = AwsS3Client.save_message_as_mime(message=mg_message)
 
         AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
         try:
-            response = self._s3_client.upload_file(tmp_file_path, bucket_name, key_name)
+            response = self._s3_client.upload_file(tmp_file_path, bucket_name, object_key)
         except ClientError as e:
             AwsS3Client.logger.error(e)
             return False
