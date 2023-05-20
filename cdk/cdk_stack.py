@@ -134,7 +134,7 @@ class GoHighLevelStack(Stack):
                 "s3:DeleteObject",
                 "s3:GetObjectVersion"
             ],
-            resources=["arn:aws:s3:::*/*"]
+            resources=[f'arn:aws:s3:::{s3_bucket_name}/*']
         )
 
         # Create IAM policy for S3 Bucket access
@@ -142,13 +142,14 @@ class GoHighLevelStack(Stack):
             sid='S3Bucket',
             effect=iam.Effect.ALLOW,
             actions=[
+                "s3:CreateBucket",
                 "s3:PutBucketTagging",
                 "s3:GetBucketLogging",
                 "s3:ListBucket",
                 "s3:GetBucketLocation",
                 "s3:GetBucketPolicy"
             ],
-            resources=["arn:aws:s3:::*"]
+            resources=[f'arn:aws:s3:::{s3_bucket_name}']
         )
 
         # Create IAM policy for Invoking Lambda Functions

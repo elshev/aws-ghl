@@ -116,6 +116,16 @@ def get_message_mime(message_url):
     Util.write_file(output_file_path, message.body_mime, newline='\n')
 
 
+def process_mailgun_events():
+    begin_date = datetime.utcnow().date() + timedelta(days=-1)
+    end_date = datetime.utcnow().date() + timedelta(days=1)
+    event = {
+        'begin_date': begin_date.isoformat(),
+        'end_date': end_date.isoformat()
+    }
+    mg_process_mailgun_events.handler(event=event, context=None)
+
+
 def main():
     setup_logging()
 
@@ -124,23 +134,11 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    simple_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAAUClIpJD1mBTJFBUI8k9O1umS99Yw=='
-    image_message_url = 'https://storage-us-east4.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQXnBYIdw7zaAqhGtojzqVlAljyQZA=='
-    reply_with_image_attachment_url = 'https://storage-us-west1.api.mailgun.net/v3/domains/send.dignamail.com/messages/BAABAQUlwG92Py50ElpITJuKKR_LQV1AYQ=='
-    message_url = reply_with_image_attachment_url
+    # process_mailgun_events()
 
-    begin_date = datetime.utcnow().date() + timedelta(days=-1)
-    end_date = datetime.utcnow().date() + timedelta(days=1)
-    event = {
-        'begin_date': begin_date.isoformat(),
-        'end_date': end_date.isoformat()
-    }
-
-    mg_process_mailgun_events.handler(event=event, context=None)
-
-    sleep_seconds = 3
-    logging.info('Sleeping for %s seconds', sleep_seconds)
-    time.sleep(sleep_seconds)
+    # sleep_seconds = 3
+    # logging.info('Sleeping for %s seconds', sleep_seconds)
+    # time.sleep(sleep_seconds)
     
     mg_process_mailgun_events_queue.handler(event={}, context=None)
 
