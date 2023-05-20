@@ -280,13 +280,27 @@ class GoHighLevelStack(Stack):
             environment=env_vars,
         )
 
+        
+        mailgun_events_dead_letter_queue = sqs.Queue(
+            self,
+            id='MailGunEventsDeadLetterQueue',
+            queue_name=f'{sqs_queue_prefix}-{SQS_MAILGUN_EVENTS_QUEUE_NAME}-DL'
+        )
+        
         # Create an SQS queue
         mailgun_events_queue = sqs.Queue(
             self,
             id='MailGunEventsQueue',
             queue_name=f'{sqs_queue_prefix}-{SQS_MAILGUN_EVENTS_QUEUE_NAME}',
             visibility_timeout=Duration.seconds(300),
-            receive_message_wait_time=Duration.seconds(20)
+            receive_message_wait_time=Duration.seconds(20),
+            # retention_period=Duration.days(4),
+            # delivery_delay=Duration.seconds(0),
+            # max_message_size_bytes=262144,  # 256 KiB
+            dead_letter_queue=sqs.DeadLetterQueue(
+                queue=mailgun_events_dead_letter_queue,
+                max_receive_count=3
+            )
         )
 
         mg_process_mailgun_events_queue_function.add_event_source(event_sources.SqsEventSource(
