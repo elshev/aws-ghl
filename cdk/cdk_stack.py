@@ -47,14 +47,17 @@ class GoHighLevelStack(Stack):
         self._lambda_architecture = lambda_.Architecture.X86_64
 
         # Load other settings from config
-        aws_bucket_region = config_json.get('AwsBucketRegion', 'us-east-1')
         mailgun_api_url = config_json.get('MailGunApiUrl', 'https://api.mailgun.net/v3')
         mailgun_domain = config_json['MailGunDomain']
 
         # S3 bucket name should be unique around the world 
         # but we don't know the AWS Account ID until the deployment
         # So, use boto3 that relies on .aws [default] profile as a workaround here
-        account_id = boto3.client("sts").get_caller_identity()["Account"]
+        sts_client = boto3.client("sts")
+        account_id = sts_client.get_caller_identity()["Account"]
+        aws_region = sts_client.meta.region_name
+        if 'global' in aws_region:
+            raise Exception(f'Wrong region: "{aws_region}". Please specify a region in ~/.aws/config')
         s3_bucket_name = f'{aws_unique_name}-{account_id}'
         
         ssm_parameter_store_path = f'/{aws_unique_name}'
@@ -66,13 +69,17 @@ class GoHighLevelStack(Stack):
         env_vars = {
             'GHL_BUCKET_NAME': s3_bucket_name,
             'TEMP_FOLDER': f'/tmp/ghl-{ghl_account_key}-{ghl_subaccount_key}',
-            'AWS_BUCKET_REGION': aws_bucket_region,
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
             'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path,
             'SQS_QUEUE_PREFIX': sqs_queue_prefix,
             'SQS_MAILGUN_EVENTS_QUEUE_NAME': SQS_MAILGUN_EVENTS_QUEUE_NAME
         }
+
+        print(f'Account ID = {account_id}')
+        print(f'Region = {aws_region}')
+        print(f'Added Env vars:\n{json.dumps(env_vars, indent=4)}')
+        
         
         # Create IAM role for Lambda functions
         ghl_lambda_role = iam.Role(
@@ -164,7 +171,7 @@ class GoHighLevelStack(Stack):
                 "sqs:GetQueueAttributes",
                 "sqs:ReceiveMessage"
             ],
-            resources=["arn:aws:sqs:::ghl_*"]
+            resources=[f'arn:aws:sqs:{aws_region}:{account_id}:{sqs_queue_prefix}*']
         )
         
 
@@ -205,32 +212,32 @@ class GoHighLevelStack(Stack):
         refresh_token_schedule_rule.add_target(event_targets.LambdaFunction(ghl_refresh_token_function))
 
 
-        # Create the Lambda function as a WebHook for Conversation Unread event
-        ghl_hook_function = lambda_.Function(
-            self, "GhlHookFunction",
-            code=lambda_.Code.from_asset("src"),
-            handler="ghl_hook.handler",
-            runtime=self.python_runtime,
-            role=ghl_lambda_role,
-            timeout=Duration.seconds(180),
-            description="WebHook for GoHighLevel ConversationUnread event",
-            architecture=self.lambda_architecture,
-            environment=env_vars,
-        )
+        # # Create the Lambda function as a WebHook for Conversation Unread event
+        # ghl_hook_function = lambda_.Function(
+        #     self, "GhlHookFunction",
+        #     code=lambda_.Code.from_asset("src"),
+        #     handler="ghl_hook.handler",
+        #     runtime=self.python_runtime,
+        #     role=ghl_lambda_role,
+        #     timeout=Duration.seconds(180),
+        #     description="WebHook for GoHighLevel ConversationUnread event",
+        #     architecture=self.lambda_architecture,
+        #     environment=env_vars,
+        # )
 
-        # Create the REST API using API Gateway
-        ghl_api = apigw.LambdaRestApi(
-            self, 
-            id="GoHighLevelApi",
-            rest_api_name="gohighlevel",
-            deploy_options={
-                "stage_name": stage
-            },
-            endpoint_configuration=apigw.EndpointConfiguration(types=[apigw.EndpointType.REGIONAL]),
-            handler=ghl_hook_function
-        )
-        resource_ghl = ghl_api.root.add_resource('gohighlevel')
-        resource_ghl.add_method('POST')
+        # # Create the REST API using API Gateway
+        # ghl_api = apigw.LambdaRestApi(
+        #     self, 
+        #     id="GoHighLevelApi",
+        #     rest_api_name="gohighlevel",
+        #     deploy_options={
+        #         "stage_name": stage
+        #     },
+        #     endpoint_configuration=apigw.EndpointConfiguration(types=[apigw.EndpointType.REGIONAL]),
+        #     handler=ghl_hook_function
+        # )
+        # resource_ghl = ghl_api.root.add_resource('gohighlevel')
+        # resource_ghl.add_method('POST')
 
 
         # Create the Lambda function for MailGun polling
@@ -251,7 +258,7 @@ class GoHighLevelStack(Stack):
         mg_process_mailgun_events_schedule_rule = events.Rule(
             self,
             id='MgProcessMailgunEventsSchedule',
-            schedule=events.Schedule.rate(Duration.minutes(15)),
+            schedule=events.Schedule.rate(Duration.minutes(60)),
             enabled=True,
             description='A schedule for polling MailGun to get messages from there'
         )
@@ -305,13 +312,13 @@ class GoHighLevelStack(Stack):
         )
 
 
-        # Outputs
-        CfnOutput(
-            self, 
-            id='GoHighLevelApiUrl',
-            value=ghl_api.url_for_path('/'),
-            description='API Gateway endpoint URL for GhlHook function'
-        )
+        # # Outputs
+        # CfnOutput(
+        #     self, 
+        #     id='GoHighLevelApiUrl',
+        #     value=ghl_api.url_for_path('/'),
+        #     description='API Gateway endpoint URL for GhlHook function'
+        # )
 
         CfnOutput(
             self, 
@@ -332,13 +339,6 @@ class GoHighLevelStack(Stack):
             id='GhlRefreshTokenFunctionArn',
             value=ghl_refresh_token_function.function_arn,
             description='GhlRefreshToken Lambda Function ARN'
-        )
-
-        CfnOutput(
-            self, 
-            id='GhlHookFunctionArn',
-            value=ghl_hook_function.function_arn,
-            description='GhlHook Lambda Function ARN'
         )
 
         CfnOutput(

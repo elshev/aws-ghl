@@ -39,8 +39,8 @@ class AppConfig:
         return os.environ['GHL_BUCKET_NAME']
 
     @staticmethod
-    def get_aws_bucket_region():
-        return os.environ.get('AWS_BUCKET_REGION', 'us-east-1')
+    def get_aws_region():
+        return os.environ.get('AWS_REGION', 'us-east-1')
 
     @staticmethod
     def get_mailgun_api_url():
