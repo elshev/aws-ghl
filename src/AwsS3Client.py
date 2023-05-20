@@ -17,7 +17,7 @@ class AwsS3Client:
     _aws_account_id = ''
     
     # Optimization variable to avoid redundant calls to AWS to check if the bucket exists
-    _bucket_exists = None
+    _bucket_exists_cache = None
 
     
     @property
@@ -62,6 +62,19 @@ class AwsS3Client:
     def get_bucket_name():
         return AppConfig.get_aws_bucket_name()
     
+    def is_bucket_exists(self, bucket_name):
+        s3_resource = boto3.resource("s3")
+        bucket_resource = s3_resource.Bucket(bucket_name)
+        if bucket_resource.creation_date:
+            return True
+        try:
+            s3_resource.meta.client.head_bucket(Bucket=bucket_name)
+        except ClientError:
+            return False
+        
+        return True
+        
+    
     def check_bucket(self):
         """Checks if a bucket exists. If not creates it
 
@@ -69,14 +82,11 @@ class AwsS3Client:
             str: Bucket Name.
         """
         # try to get a bucket name from cache first
-        AwsS3Client.get_bucket_name()
+        bucket_name = AwsS3Client.get_bucket_name()
         #         
-        if not AwsS3Client._bucket_exists:
-            bucket_name = AppConfig.get_aws_bucket_name()
-            s3_resource = boto3.resource("s3")
-            bucket_resource = s3_resource.Bucket(bucket_name)
+        if not AwsS3Client._bucket_exists_cache:
             # Create a bucket in S3 if it doesn't exist
-            if bucket_resource.creation_date is None:
+            if not self.is_bucket_exists(bucket_name):
                 create_bucket_configuration = {}
                 aws_region = AppConfig.get_aws_region()
                 AwsS3Client.logger.info("Bucket '%s' doesn't exist. Creating a bucket in '%s' regon...", bucket_name, aws_region)
@@ -91,7 +101,7 @@ class AwsS3Client:
                     self._s3_client.create_bucket(Bucket=bucket_name)
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
-            AwsS3Client._bucket_exists = True
+            AwsS3Client._bucket_exists_cache = True
 
         return bucket_name
 

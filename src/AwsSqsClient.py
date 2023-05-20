@@ -27,7 +27,7 @@ class AwsSqsClient:
         response = self._sqs_client.receive_message(
             QueueUrl=queue_url,
             MaxNumberOfMessages=1,
-            WaitTimeSeconds=20
+            WaitTimeSeconds=5
         )
         return response
         
