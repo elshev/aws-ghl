@@ -6,6 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
+from GhlOutboundMessage import GhlOutboundMessage
 from MgMessage import MgMessage
 from Util import Util
 
@@ -184,3 +185,6 @@ class AwsS3Client:
         AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
         AwsS3Client.logger.info('Response: %s', response)
         return True
+
+    def upload_outbound_sms(self, ghl_message: GhlOutboundMessage):
+        pass

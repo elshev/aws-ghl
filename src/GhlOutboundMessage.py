@@ -4,6 +4,11 @@ from typing import (
     Mapping
 )
 
+class GhlMessageType:
+    EMAIL = 'EMAIL'
+    SMS = 'SMS'
+    
+
 @dataclass
 class GhlOutboundMessage:
     type: str

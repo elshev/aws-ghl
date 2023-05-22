@@ -52,7 +52,7 @@ def setup_logging():
     )
 
 
-ghlEventBody = {
+contactCreateBody = {
     'type': 'ContactCreate',
     'locationId': 'locacion123',
     'id': 'id12345',
@@ -60,6 +60,20 @@ ghlEventBody = {
     'country': 'US',
     'firstName': 'John',
     'lastName': 'Testoff'
+}
+
+outboundSmsBody = {
+    "type": "OutboundMessage",
+    "locationId": "testLocation01",
+    "contactId": "testContact01",
+    "conversationId": "testConversation01",
+    "userId": "testUser01",
+    "messageType": "SMS",
+    "direction": "outbound",
+    "contentType": "text/plain",
+    "body": "\"SMS\" Message Test",
+    "attachments": [],
+    "dateAdded": "2023-05-22T06:51:16.000Z"
 }
 
 ghlEvent = {
@@ -78,32 +92,8 @@ ghlEvent = {
         'resourcePath': '/gohighlevel',
         'httpMethod': 'POST'
     },
-    'body': json.dumps(ghlEventBody),
+    'body': json.dumps(outboundSmsBody),
     'isBase64Encoded': False
-}
-
-conversationUnreadUpdateBody = {
-    'type': 'ConversationUnreadUpdate',
-    'locationId': 'dFUlfpB0VzwguRGR3IB3',
-    'id': 'VH12UQXitFFdkA7tC6wX',
-    'contactId': 'X1PraMGEWrprg9GoJAZp',
-    'deleted': False,
-    'inbox': True,
-    'unreadCount': 0
-}
-
-outboundMessageBody = {
-    "type": "OutboundMessage",
-    "locationId": "dFUlfpB0VzwguRGR3IB3",
-    "contactId": "yQt7wzy5pVDbds94pEpq",
-    "conversationId": "jnHaVcGxKq6OEkIJDd6q",
-    "userId": "8tMrecTfd0N6egSO3bYT",
-    "messageType": "SMS",
-    "direction": "outbound",
-    "contentType": "text/plain",
-    "body": "\"SMS\" Message Test",
-    "attachments": [],
-    "dateAdded": "2023-05-22T06:51:16.000Z"
 }
 
 
@@ -156,7 +146,7 @@ def main():
     
     # mg_process_mailgun_events_queue.handler(event={}, context=None)
 
-    ghl_hook.handler(outboundMessageBody, None)
+    ghl_hook.handler(outboundSmsBody, None)
     # ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')
