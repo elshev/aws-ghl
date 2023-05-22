@@ -92,6 +92,20 @@ conversationUnreadUpdateBody = {
     'unreadCount': 0
 }
 
+outboundMessageBody = {
+    "type": "OutboundMessage",
+    "locationId": "dFUlfpB0VzwguRGR3IB3",
+    "attachments": [],
+    "body": "\"SMS\" Message Test",
+    "contactId": "yQt7wzy5pVDbds94pEpq",
+    "contentType": "text/plain",
+    "conversationId": "jnHaVcGxKq6OEkIJDd6q",
+    "dateAdded": "2023-05-22T06:51:16.000Z",
+    "direction": "outbound",
+    "messageType": "SMS",
+    "userId": "8tMrecTfd0N6egSO3bYT"
+}
+
 
 def get_messages(begin_date=None):
     if not begin_date:
@@ -142,8 +156,8 @@ def main():
     
     # mg_process_mailgun_events_queue.handler(event={}, context=None)
 
-    # ghl_hook.handler(conversationUnreadUpdateBody, None)
-    ghl_refresh_token.handler({}, None)
+    ghl_hook.handler(outboundMessageBody, None)
+    # ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')
 
