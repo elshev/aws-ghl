@@ -95,15 +95,15 @@ conversationUnreadUpdateBody = {
 outboundMessageBody = {
     "type": "OutboundMessage",
     "locationId": "dFUlfpB0VzwguRGR3IB3",
-    "attachments": [],
-    "body": "\"SMS\" Message Test",
     "contactId": "yQt7wzy5pVDbds94pEpq",
-    "contentType": "text/plain",
     "conversationId": "jnHaVcGxKq6OEkIJDd6q",
-    "dateAdded": "2023-05-22T06:51:16.000Z",
-    "direction": "outbound",
+    "userId": "8tMrecTfd0N6egSO3bYT",
     "messageType": "SMS",
-    "userId": "8tMrecTfd0N6egSO3bYT"
+    "direction": "outbound",
+    "contentType": "text/plain",
+    "body": "\"SMS\" Message Test",
+    "attachments": [],
+    "dateAdded": "2023-05-22T06:51:16.000Z"
 }
 
 
