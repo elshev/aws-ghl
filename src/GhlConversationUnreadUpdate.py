@@ -6,7 +6,7 @@ from typing import (
 
 
 @dataclass
-class ConversationUnreadUpdate:
+class GhlConversationUnreadUpdate:
     type: str
     location_id: str
     id: str
@@ -16,8 +16,8 @@ class ConversationUnreadUpdate:
     unread_count: str
 
     @staticmethod
-    def from_dict(event: Any) -> 'ConversationUnreadUpdate':
-        if not ConversationUnreadUpdate.is_conversation_unread_update(event):
+    def from_dict(event: Any) -> 'GhlConversationUnreadUpdate':
+        if not GhlConversationUnreadUpdate.is_conversation_unread_update(event):
             return None
         _type = str(event.get("type"))
         _location_id = str(event.get("locationId"))
@@ -26,7 +26,7 @@ class ConversationUnreadUpdate:
         _deleted = bool(event.get("deleted"))
         _inbox = bool(event.get("inbox"))
         _unread_count = int(event.get("unreadCount"))
-        return ConversationUnreadUpdate(
+        return GhlConversationUnreadUpdate(
             type=_type,
             location_id=_location_id,
             id=_id,

@@ -1,8 +1,8 @@
 import logging
 import json
 from AwsS3Client import AwsS3Client
-from ConversationRepository import ConversationRepository
-from ConversationUnreadUpdate import ConversationUnreadUpdate
+from GhlConversationRepository import GhlConversationRepository
+from GhlConversationUnreadUpdate import GhlConversationUnreadUpdate
 from GhlOutboundMessage import (
     GhlMessageType, 
     GhlOutboundMessage

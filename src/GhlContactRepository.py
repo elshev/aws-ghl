@@ -3,16 +3,13 @@ import logging
 import urllib3
 from AppConfig import AppConfig
 from AwsSsmClient import AwsSsmClient
+from GhlContact import GhlContact
 
-class ConversationRepository:
-    @property
-    def location_id(self):
-        return self._location_id
+class GhlContactRepository:
 
-    def __init__(self, location_id) -> None:
+    def __init__(self) -> None:
         self._ssm_client = AwsSsmClient()
         self._ghl_api_version = '2021-07-28'
-        self._location_id = location_id
         self._logger = logging.getLogger()
         self._base_url = AppConfig.get_ghl_base_url()
 
@@ -45,10 +42,9 @@ class ConversationRepository:
 
         return data
 
-    def get_by_id(self, conversation_id):
-        api_path = f'/conversations/{conversation_id}'
-        return self.ghl_request(api_path)
-
-    def search(self, conversation_id):
-        api_path = f'/conversations/search?locationId={self.location_id}&Version={self._ghl_api_version}&id={conversation_id}'
-        return self.ghl_request(api_path)
+    def get_by_id(self, contact_id):
+        api_path = f'/contacts/{contact_id}'
+        data = self.ghl_request(api_path)
+        
+        ghl_contact = GhlContact.from_dict(data)
+        return ghl_contact
