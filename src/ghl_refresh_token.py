@@ -11,16 +11,15 @@ from AppConfig import AppConfig
 from Util import Util
 
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ssm_client = boto3.client('ssm')
+
 access_token_ssm_path = AppConfig.get_ghl_access_token_ssm_path()
 refresh_token_ssm_path = f'{AppConfig.get_ssm_base_path()}/RefreshToken'
 access_token_expire_ssm_path = f'{AppConfig.get_ssm_base_path()}/AccessTokenExpire'
 client_id_ssm_path = f'{AppConfig.get_ssm_base_path()}/ClientId'
 client_secret_ssm_path = f'{AppConfig.get_ssm_base_path()}/ClientSecret'
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-ssm_client = boto3.client('ssm')
-
 
 def time_to_str(date_time):
     if not isinstance(date_time, datetime.date):
@@ -106,18 +105,22 @@ def ghl_refresh_token():
         'reason': response.reason,
         'data': data
     }
-    logger.info('Response:\n %s', result)
+
+    if AppConfig.is_local_execution():
+        logger.info('Response:\n %s', result)
 
     if response.status == HTTPStatus.OK:
         access_token = data['access_token']
         refresh_token = data['refresh_token']
-        logger.info('Refresh Token: %s', refresh_token)
+        if AppConfig.is_local_execution():
+            logger.info('Refresh Token: %s', refresh_token)
         expires_in = int(data['expires_in']) - 10
         expire_date = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
         expire_timestamp = datetime.datetime.timestamp(expire_date)
         update_ssm_string_parameter(access_token_ssm_path, access_token)
         update_ssm_string_parameter(refresh_token_ssm_path, refresh_token)
         update_ssm_string_parameter(access_token_expire_ssm_path, str(expire_timestamp))
+        logger.info('Success! Access Token, Refresh Token, Access Token Expire were successfully updated in SSM Parameter Store')
 
     return result
 

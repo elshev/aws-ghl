@@ -60,7 +60,7 @@ class GoHighLevelStack(Stack):
             raise Exception(f'Wrong region: "{aws_region}". Please specify a region in ~/.aws/config')
         s3_bucket_name = f'{aws_unique_name}-{account_id}'
         
-        ssm_parameter_store_path = f'/{aws_unique_name}'
+        ssm_base_path = f'/{aws_unique_name}'
         sqs_queue_prefix = aws_unique_name
         
         SQS_MAILGUN_EVENTS_QUEUE_NAME = 'mailgun-events'
@@ -71,7 +71,7 @@ class GoHighLevelStack(Stack):
             'TEMP_FOLDER': f'/{aws_unique_name}',
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
-            'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path,
+            'SSM_BASE_PATH': ssm_base_path,
             'SQS_QUEUE_PREFIX': sqs_queue_prefix,
             'SQS_MAILGUN_EVENTS_QUEUE_NAME': SQS_MAILGUN_EVENTS_QUEUE_NAME
         }
@@ -201,6 +201,7 @@ class GoHighLevelStack(Stack):
             timeout=Duration.seconds(180),
             description="Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store",
             architecture=self.lambda_architecture,
+            environment=env_vars
         )
 
         # Add a schedule event to trigger the token refresh function

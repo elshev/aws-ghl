@@ -6,7 +6,7 @@ class AppConfig:
 
     @staticmethod
     def is_local_execution():
-        return os.environ.get['AWS_LAMBDA_FUNCTION_NAME'] is None
+        return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is None
     
     @staticmethod
     def is_aws_execution():
@@ -14,7 +14,7 @@ class AppConfig:
     
     @staticmethod
     def get_ssm_base_path():
-        return os.environ['SSM_PARAMETER_STORE_PATH']
+        return os.environ['SSM_BASE_PATH']
 
     @staticmethod
     def get_sqs_queue_prefix():
