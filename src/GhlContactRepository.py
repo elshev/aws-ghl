@@ -17,5 +17,5 @@ class GhlContactRepository(GhlBaseRepository):
         api_path = f'/contacts/{contact_id}'
         data = self.ghl_request(api_path)
         
-        ghl_contact = GhlContact.from_dict(data)
+        ghl_contact = GhlContact.from_dict(data['contact'])
         return ghl_contact

@@ -64,16 +64,16 @@ contactCreateBody = {
 
 outboundSmsBody = {
     "type": "OutboundMessage",
-    "locationId": "testLocation01",
-    "contactId": "testContact01",
-    "conversationId": "testConversation01",
-    "userId": "testUser01",
-    "messageType": "SMS",
-    "direction": "outbound",
-    "contentType": "text/plain",
-    "body": "\"SMS\" Message Test",
+    "locationId": "dFUlfpB0VzwguRGR3IB3",
     "attachments": [],
-    "dateAdded": "2023-05-22T06:51:16.000Z"
+    "body": "\"SMS\" Message Test",
+    "contactId": "yQt7wzy5pVDbds94pEpq",
+    "contentType": "text/plain",
+    "conversationId": "jnHaVcGxKq6OEkIJDd6q",
+    "dateAdded": "2023-05-22T06:51:16.000Z",
+    "direction": "outbound",
+    "messageType": "SMS",
+    "userId": "8tMrecTfd0N6egSO3bYT"
 }
 
 ghlEvent = {

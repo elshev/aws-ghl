@@ -1,6 +1,7 @@
 import logging
 import json
 from AwsS3Client import AwsS3Client
+from GhlContactRepository import GhlContactRepository
 from GhlConversationRepository import GhlConversationRepository
 from GhlConversationUnreadUpdate import GhlConversationUnreadUpdate
 from GhlOutboundMessage import (
@@ -62,6 +63,10 @@ def handler(event, context):
         logger.info('Event type = "%s" is not processed by this function. Exiting...', event_type)
         return
 
+    ghl_contact_repository = GhlContactRepository()
+    ghl_contact = ghl_contact_repository.get_by_id(outbound_sms.contact_id)
+    outbound_sms.contact = ghl_contact
+    
     s3_client = AwsS3Client()
     s3_client.upload_outbound_sms(outbound_sms)
     

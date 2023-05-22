@@ -4,6 +4,8 @@ from typing import (
     Mapping
 )
 
+from GhlContact import GhlContact
+
 class GhlMessageType:
     EMAIL = 'EMAIL'
     SMS = 'SMS'
@@ -21,6 +23,7 @@ class GhlOutboundMessage:
     content_type: str
     body: str
     date_added: str
+    contact: GhlContact = None
 
     @staticmethod
     def from_dict(event: Any) -> 'GhlOutboundMessage':
@@ -36,6 +39,7 @@ class GhlOutboundMessage:
         _content_type = str(event.get("contentType"))
         _body = str(event.get("body"))
         _date_added = str(event.get("dateAdded"))
+        _contact = None
         return GhlOutboundMessage(
             type=_type,
             location_id=_location_id,
@@ -46,7 +50,8 @@ class GhlOutboundMessage:
             direction=_direction,
             content_type=_content_type,
             body=_body,
-            date_added=_date_added
+            date_added=_date_added,
+            contact=_contact
         )
     
     @staticmethod
@@ -55,3 +60,24 @@ class GhlOutboundMessage:
             return False
         event_type = str(event.get('type'))
         return event_type == 'OutboundMessage'
+
+    @property
+    def first_name(self):
+        return self.contact.first_name if self.contact else None
+
+    @property
+    def last_name(self):
+        return self.contact.last_name if self.contact else None
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+    @property
+    def email(self):
+        return self.contact.email if self.contact else None
+
+    @property
+    def phone(self):
+        return self.contact.phone if self.contact else None
+
