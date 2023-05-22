@@ -13,7 +13,7 @@ class AppConfig:
         return not AppConfig.is_local_execution()
     
     @staticmethod
-    def get_ssm_parameter_path():
+    def get_ssm_base_path():
         return os.environ['SSM_PARAMETER_STORE_PATH']
 
     @staticmethod
@@ -29,8 +29,12 @@ class AppConfig:
         return 'https://services.leadconnectorhq.com'
 
     @staticmethod
+    def get_ghl_access_token_ssm_path():
+        return f'{AppConfig.get_ssm_base_path()}/AccessToken'
+
+    @staticmethod
     def get_ghl_access_token():
-        access_token_param_name = f'{AppConfig.get_ssm_parameter_path()}/AccessToken'
+        access_token_param_name = AppConfig.get_ghl_access_token_ssm_path()
         return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', access_token_param_name)
    
     
@@ -52,7 +56,7 @@ class AppConfig:
 
     @staticmethod
     def get_mailgun_api_key():
-        mailgun_api_key_param_name = f'{AppConfig.get_ssm_parameter_path()}/MailGunApiKey'
+        mailgun_api_key_param_name = f'{AppConfig.get_ssm_base_path()}/MailGunApiKey'
         return AwsSsmClient.get_parameter('MAILGUN_API_KEY', mailgun_api_key_param_name)
 
     @staticmethod

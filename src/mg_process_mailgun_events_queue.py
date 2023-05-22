@@ -27,7 +27,7 @@ def handler(event, context):
     if not raw_events:
         logging.info('Messages were not found in SQS. Exiting...')
         return
-    
+
     # Convert raw events dict to a list of MgEvent
     logging.info('Processing events...')
     mg_client = MgClient()

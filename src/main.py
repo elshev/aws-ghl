@@ -140,10 +140,10 @@ def main():
     # logging.info('Sleeping for %s seconds', sleep_seconds)
     # time.sleep(sleep_seconds)
     
-    mg_process_mailgun_events_queue.handler(event={}, context=None)
+    # mg_process_mailgun_events_queue.handler(event={}, context=None)
 
     # ghl_hook.handler(conversationUnreadUpdateBody, None)
-    # ghl_refresh_token.handler(event, None)
+    ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')
 

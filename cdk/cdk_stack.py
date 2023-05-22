@@ -68,7 +68,7 @@ class GoHighLevelStack(Stack):
         # Define Environment Variables for Lambda functions
         env_vars = {
             'GHL_BUCKET_NAME': s3_bucket_name,
-            'TEMP_FOLDER': f'/tmp/ghl-{ghl_account_key}-{ghl_subaccount_key}',
+            'TEMP_FOLDER': f'/{aws_unique_name}',
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
             'SSM_PARAMETER_STORE_PATH': ssm_parameter_store_path,
