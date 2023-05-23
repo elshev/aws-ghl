@@ -53,8 +53,8 @@ class GoHighLevelStack(Stack):
         # S3 bucket name should be unique around the world 
         # but we don't know the AWS Account ID until the deployment
         # So, use boto3 that relies on .aws [default] profile as a workaround here
-        sts_client = boto3.client("sts")
-        account_id = sts_client.get_caller_identity()["Account"]
+        sts_client = boto3.client('sts')
+        account_id = sts_client.get_caller_identity()['Account']
         aws_region = sts_client.meta.region_name
         if 'global' in aws_region:
             raise Exception(f'Wrong region: "{aws_region}". Please specify a region in ~/.aws/config')
@@ -68,7 +68,7 @@ class GoHighLevelStack(Stack):
         # Define Environment Variables for Lambda functions
         env_vars = {
             'GHL_BUCKET_NAME': s3_bucket_name,
-            'TEMP_FOLDER': f'/{aws_unique_name}',
+            'TEMP_FOLDER': f'/tmp/{aws_unique_name}',
             'MAILGUN_API_URL': mailgun_api_url,
             'MAILGUN_DOMAIN': mailgun_domain,
             'SSM_BASE_PATH': ssm_base_path,
@@ -83,12 +83,12 @@ class GoHighLevelStack(Stack):
         
         # Create IAM role for Lambda functions
         ghl_lambda_role = iam.Role(
-            self, "GhlLambdaRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            self, 'GhlLambdaRole',
+            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
             managed_policies=[
                 iam.ManagedPolicy.from_managed_policy_arn(scope=self, id='LambdaRole', managed_policy_arn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'),
-                iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaExecute"),
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMFullAccess")
+                iam.ManagedPolicy.from_aws_managed_policy_name('AWSLambdaExecute'),
+                iam.ManagedPolicy.from_aws_managed_policy_name('AmazonSSMFullAccess')
             ]
         )
 
@@ -97,20 +97,20 @@ class GoHighLevelStack(Stack):
             sid='CloudWatchLogs',
             effect=iam.Effect.ALLOW,
             actions=[
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "logs:CreateLogDelivery",
-                "logs:GetLogDelivery",
-                "logs:UpdateLogDelivery",
-                "logs:DeleteLogDelivery",
-                "logs:ListLogDeliveries",
-                "logs:PutResourcePolicy",
-                "logs:DescribeResourcePolicies",
-                "logs:DescribeLogGroups",
-                "logs:DescribeLogStreams"
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+                'logs:CreateLogDelivery',
+                'logs:GetLogDelivery',
+                'logs:UpdateLogDelivery',
+                'logs:DeleteLogDelivery',
+                'logs:ListLogDeliveries',
+                'logs:PutResourcePolicy',
+                'logs:DescribeResourcePolicies',
+                'logs:DescribeLogGroups',
+                'logs:DescribeLogStreams'
             ],
-            resources=["arn:aws:logs:*:*:*"]
+            resources=['arn:aws:logs:*:*:*']
         )
 
         # Create IAM policy for S3 Object access
@@ -118,21 +118,21 @@ class GoHighLevelStack(Stack):
             sid='S3Object',
             effect=iam.Effect.ALLOW,
             actions=[
-                "s3:DeleteObjectTagging",
-                "s3:GetObjectRetention",
-                "s3:DeleteObjectVersion",
-                "s3:GetObjectAttributes",
-                "s3:PutObjectVersionTagging",
-                "s3:DeleteObjectVersionTagging",
-                "s3:PutObjectLegalHold",
-                "s3:PutObject",
-                "s3:GetObjectAcl",
-                "s3:GetObject",
-                "s3:PutObjectRetention",
-                "s3:GetObjectTagging",
-                "s3:PutObjectTagging",
-                "s3:DeleteObject",
-                "s3:GetObjectVersion"
+                's3:DeleteObjectTagging',
+                's3:GetObjectRetention',
+                's3:DeleteObjectVersion',
+                's3:GetObjectAttributes',
+                's3:PutObjectVersionTagging',
+                's3:DeleteObjectVersionTagging',
+                's3:PutObjectLegalHold',
+                's3:PutObject',
+                's3:GetObjectAcl',
+                's3:GetObject',
+                's3:PutObjectRetention',
+                's3:GetObjectTagging',
+                's3:PutObjectTagging',
+                's3:DeleteObject',
+                's3:GetObjectVersion'
             ],
             resources=[f'arn:aws:s3:::{s3_bucket_name}/*']
         )
@@ -142,12 +142,12 @@ class GoHighLevelStack(Stack):
             sid='S3Bucket',
             effect=iam.Effect.ALLOW,
             actions=[
-                "s3:CreateBucket",
-                "s3:PutBucketTagging",
-                "s3:GetBucketLogging",
-                "s3:ListBucket",
-                "s3:GetBucketLocation",
-                "s3:GetBucketPolicy"
+                's3:CreateBucket',
+                's3:PutBucketTagging',
+                's3:GetBucketLogging',
+                's3:ListBucket',
+                's3:GetBucketLocation',
+                's3:GetBucketPolicy'
             ],
             resources=[f'arn:aws:s3:::{s3_bucket_name}']
         )
@@ -157,9 +157,9 @@ class GoHighLevelStack(Stack):
             sid='InvokeLambdaPolicy',
             effect=iam.Effect.ALLOW,
             actions=[
-                "lambda:InvokeFunction",
+                'lambda:InvokeFunction',
             ],
-            resources=["*"]
+            resources=['*']
         )
         
         # Create IAM policy for SQSInvoking Lambda Functions
@@ -167,10 +167,10 @@ class GoHighLevelStack(Stack):
             sid='SqsProcessMessagesPolicy',
             effect=iam.Effect.ALLOW,
             actions=[
-                "sqs:SendMessage",
-                "sqs:DeleteMessage",
-                "sqs:GetQueueAttributes",
-                "sqs:ReceiveMessage"
+                'sqs:SendMessage',
+                'sqs:DeleteMessage',
+                'sqs:GetQueueAttributes',
+                'sqs:ReceiveMessage'
             ],
             resources=[f'arn:aws:sqs:{aws_region}:{account_id}:{sqs_queue_prefix}*']
         )
@@ -193,13 +193,13 @@ class GoHighLevelStack(Stack):
 
         # Create the Lambda function for refreshing Access and Refresh tokens
         ghl_refresh_token_function = lambda_.Function(
-            self, "GhlRefreshTokenFunction",
-            code=lambda_.Code.from_asset("src"),
-            handler="ghl_refresh_token.handler",
+            self, 'GhlRefreshTokenFunction',
+            code=lambda_.Code.from_asset('src'),
+            handler='ghl_refresh_token.handler',
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(180),
-            description="Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store",
+            description='Refreshes token as described here https://highlevel.stoplight.io/docs/integrations/00d0c0ecaa369-get-access-token. Stores new Access and Refresh Token in SSM Parameter Store',
             architecture=self.lambda_architecture,
             environment=env_vars
         )
@@ -214,44 +214,44 @@ class GoHighLevelStack(Stack):
         refresh_token_schedule_rule.add_target(event_targets.LambdaFunction(ghl_refresh_token_function))
 
 
-        # # Create the Lambda function as a WebHook for Conversation Unread event
-        # ghl_hook_function = lambda_.Function(
-        #     self, "GhlHookFunction",
-        #     code=lambda_.Code.from_asset("src"),
-        #     handler="ghl_hook.handler",
-        #     runtime=self.python_runtime,
-        #     role=ghl_lambda_role,
-        #     timeout=Duration.seconds(180),
-        #     description="WebHook for GoHighLevel ConversationUnread event",
-        #     architecture=self.lambda_architecture,
-        #     environment=env_vars,
-        # )
+        # Create the Lambda function as a WebHook for Conversation Unread event
+        ghl_hook_function = lambda_.Function(
+            self, 'GhlHookFunction',
+            code=lambda_.Code.from_asset('src'),
+            handler='ghl_hook.handler',
+            runtime=self.python_runtime,
+            role=ghl_lambda_role,
+            timeout=Duration.seconds(180),
+            description='WebHook for SMS events',
+            architecture=self.lambda_architecture,
+            environment=env_vars,
+        )
 
-        # # Create the REST API using API Gateway
-        # ghl_api = apigw.LambdaRestApi(
-        #     self, 
-        #     id="GoHighLevelApi",
-        #     rest_api_name="gohighlevel",
-        #     deploy_options={
-        #         "stage_name": stage
-        #     },
-        #     endpoint_configuration=apigw.EndpointConfiguration(types=[apigw.EndpointType.REGIONAL]),
-        #     handler=ghl_hook_function
-        # )
-        # resource_ghl = ghl_api.root.add_resource('gohighlevel')
-        # resource_ghl.add_method('POST')
+        # Create the REST API using API Gateway
+        ghl_api = apigw.LambdaRestApi(
+            self, 
+            id='GoHighLevelApi',
+            rest_api_name='gohighlevel',
+            deploy_options={
+                'stage_name': stage
+            },
+            endpoint_configuration=apigw.EndpointConfiguration(types=[apigw.EndpointType.REGIONAL]),
+            handler=ghl_hook_function
+        )
+        resource_ghl = ghl_api.root.add_resource('gohighlevel')
+        resource_ghl.add_method('POST')
 
 
         # Create the Lambda function for MailGun polling
         mg_process_mailgun_events_function = lambda_.Function(
             self, 
-            id="MgProcessMailgunEventsFunction",
-            code=lambda_.Code.from_asset("src"),
-            handler="mg_process_mailgun_events.handler",
+            id='MgProcessMailgunEventsFunction',
+            code=lambda_.Code.from_asset('src'),
+            handler='mg_process_mailgun_events.handler',
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(900),
-            description="Gets events from MailGun and then push them into mailgun-events queue",
+            description='Pulls events from MailGun and then push them into mailgun-events queue',
             architecture=self.lambda_architecture,
             environment=env_vars,
         )
@@ -270,13 +270,13 @@ class GoHighLevelStack(Stack):
         # Create the Lambda function for process SQS queue with MailGun events
         mg_process_mailgun_events_queue_function = lambda_.Function(
             self, 
-            id="MgProcessMailgunEventsQueueFunction",
-            code=lambda_.Code.from_asset("src"),
-            handler="mg_process_mailgun_events_queue.handler",
+            id='MgProcessMailgunEventsQueueFunction',
+            code=lambda_.Code.from_asset('src'),
+            handler='mg_process_mailgun_events_queue.handler',
             runtime=self.python_runtime,
             role=ghl_lambda_role,
             timeout=Duration.seconds(300),
-            description="Gets MailGun events from SQS queue and stores them to S3",
+            description='Gets MailGun events from SQS queue and stores them to S3',
             architecture=self.lambda_architecture,
             environment=env_vars,
         )
@@ -328,13 +328,13 @@ class GoHighLevelStack(Stack):
         )
 
 
-        # # Outputs
-        # CfnOutput(
-        #     self, 
-        #     id='GoHighLevelApiUrl',
-        #     value=ghl_api.url_for_path('/'),
-        #     description='API Gateway endpoint URL for GhlHook function'
-        # )
+        # Outputs
+        CfnOutput(
+            self, 
+            id='GoHighLevelApiUrl',
+            value=ghl_api.url_for_path('/'),
+            description='API Gateway endpoint URL for GhlHook function'
+        )
 
         CfnOutput(
             self, 
@@ -348,13 +348,6 @@ class GoHighLevelStack(Stack):
             id='GhlLambdaIamRoleArn',
             value=ghl_lambda_role.role_arn,
             description='IAM Role for Lambda functions'
-        )
-
-        CfnOutput(
-            self, 
-            id='GhlRefreshTokenFunctionArn',
-            value=ghl_refresh_token_function.function_arn,
-            description='GhlRefreshToken Lambda Function ARN'
         )
 
         CfnOutput(
