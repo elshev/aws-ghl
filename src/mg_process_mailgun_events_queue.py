@@ -38,7 +38,7 @@ def handler(event, context):
     s3_client = AwsS3Client()
     for mg_event in mg_events:
         mg_message = mg_client.get_mime_message(mg_event)
-        s3_client.upload_message_to_s3(mg_message)
+        s3_client.upload_mgmessage_to_s3(mg_message)
     
     # Remove message from SQS
     if receipt_handle:
