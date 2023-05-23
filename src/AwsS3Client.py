@@ -186,5 +186,52 @@ class AwsS3Client:
         AwsS3Client.logger.info('Response: %s', response)
         return True
 
+    
+    @staticmethod
+    def get_object_key_from_outbound_message(ghl_message: GhlOutboundMessage):
+        dt = ghl_message.date_added
+        folder_name = ghl_message.email.lower()
+        return f'{folder_name}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}-sms.json'
+
+    
+    def check_bucket_object(self, object_key: str):
+        bucket_name = self.check_bucket()
+        if self.is_object_exits(object_key):
+            AwsS3Client.logger.info('Object "%s" already exists in S3 bucket "%s". Skip saving it.', object_key, bucket_name)
+            return None
+        return bucket_name
+
+    def save_message_as_sms(ghl_message: GhlOutboundMessage):
+        output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S-%f")}-{ghl_message.conversation_id}.json'
+        output_file_path = AppConfig.get_temp_file_path(output_file_name)
+        logging.info(f'Dumpping SMS to the file: "{output_file_path}"')
+        content = json.dumps(ghl_message.to_dict(), indent=2)
+        Util.write_file(output_file_path, content, newline='\n')
+
+        return output_file_path
+
+
+    def save_file_to_s3(self, bucket_name, object_key, tmp_file_path):
+        s3_path = f'{bucket_name}/{object_key}'
+        AwsS3Client.logger.info('Starting S3.putObject to %s ...', s3_path)
+        try:
+            response = self._s3_client.upload_file(tmp_file_path, bucket_name, object_key)
+        except ClientError as e:
+            AwsS3Client.logger.error(e)
+            return
+        finally:
+            AwsS3Client.remove_tmp_file(tmp_file_path)
+        AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
+        AwsS3Client.logger.info('Response: %s', response)
+        
+
     def upload_outbound_sms(self, ghl_message: GhlOutboundMessage):
-        pass
+        object_key = AwsS3Client.get_object_key_from_outbound_message(ghl_message)
+
+        bucket_name = self.check_bucket_object(object_key)
+        if not bucket_name:
+            return
+
+        tmp_file_path = AwsS3Client.save_message_as_sms(ghl_message)
+        
+        self.save_file_to_s3(bucket_name, object_key, tmp_file_path)

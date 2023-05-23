@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytest
 from GhlOutboundMessage import GhlOutboundMessage
 
 outboundMessageBody = {
@@ -27,7 +30,7 @@ class TestIsOutboundMessage():
         """
         # Arrange
         # Act
-        #Assert
+        # Assert
         assert GhlOutboundMessage.is_outbound_message(None) is False
         assert GhlOutboundMessage.is_outbound_message(10) is False
         assert GhlOutboundMessage.is_outbound_message({}) is False
@@ -51,7 +54,7 @@ class TestFromDict():
         # Act
         ghl_outbound_message = GhlOutboundMessage.from_dict(outboundMessageBody)
         
-        #Assert
+        # Assert
         assert ghl_outbound_message.type == 'OutboundMessage'
         assert ghl_outbound_message.location_id == outboundMessageBody['locationId']
         assert ghl_outbound_message.contact_id == outboundMessageBody['contactId']
@@ -61,4 +64,28 @@ class TestFromDict():
         assert ghl_outbound_message.direction == outboundMessageBody['direction']
         assert ghl_outbound_message.message_type == outboundMessageBody['messageType']
         assert ghl_outbound_message.body == outboundMessageBody['body']
-        assert ghl_outbound_message.date_added == outboundMessageBody['dateAdded']
+        date_added_str = outboundMessageBody['dateAdded'].replace('Z', '+00:00')
+        date_added = datetime.fromisoformat(date_added_str)
+        assert ghl_outbound_message.date_added == date_added
+
+
+    def test_wrong_datetime(self):
+        """
+        Tests that the from_dict() method returns a proper object with all fields
+        """
+        # Arrange
+        body_with_wrong_date = outboundMessageBody.copy()
+        
+        # Act
+        # Assert
+        body_with_wrong_date['dateAdded'] = 'abcdef'
+        with pytest.raises(ValueError, match='Invalid isoformat string'):
+            GhlOutboundMessage.from_dict(body_with_wrong_date)
+
+        body_with_wrong_date['dateAdded'] = '2023-15-02T06:51:16.000Z'
+        with pytest.raises(ValueError, match='month must be in'):
+            GhlOutboundMessage.from_dict(body_with_wrong_date)
+        
+        body_with_wrong_date['dateAdded'] = '2023-05-00T06:51:16.000Z'
+        with pytest.raises(ValueError, match='day is out of range for month'):
+            GhlOutboundMessage.from_dict(body_with_wrong_date)

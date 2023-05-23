@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from datetime import (
+    datetime
+)
 from typing import (
     Any, 
     Mapping
@@ -22,7 +25,7 @@ class GhlOutboundMessage:
     direction: str
     content_type: str
     body: str
-    date_added: str
+    date_added: datetime
     contact: GhlContact = None
 
     @staticmethod
@@ -38,7 +41,8 @@ class GhlOutboundMessage:
         _direction = str(event.get("direction"))
         _content_type = str(event.get("contentType"))
         _body = str(event.get("body"))
-        _date_added = str(event.get("dateAdded"))
+        _date_added_str = str(event.get("dateAdded")).replace('Z', '+00:00')
+        _date_added = datetime.fromisoformat(_date_added_str)
         _contact = None
         return GhlOutboundMessage(
             type=_type,
@@ -81,3 +85,20 @@ class GhlOutboundMessage:
     def phone(self):
         return self.contact.phone if self.contact else None
 
+    def to_dict(self):
+        result = {
+            'type': self.type,
+            'location_id': self.location_id,
+            'contact_id': self.contact_id,
+            'conversation_id': self.conversation_id,
+            'user_id': self.user_id,
+            'full_name': self.full_name,
+            'email': self.email,
+            'phone': self.phone,
+            'message_type': self.message_type,
+            'direction': self.direction,
+            'content_type': self.content_type,
+            'body': self.body,
+            'date_added': self.date_added.isoformat()
+        }
+        return result

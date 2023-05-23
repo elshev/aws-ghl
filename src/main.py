@@ -8,6 +8,7 @@ import time
 from AppConfig import AppConfig
 from AwsS3Client import AwsS3Client
 from AwsStsClient import AwsStsClient
+from GhlOutboundMessage import GhlOutboundMessage
 from MgClient import MgClient
 from MgMessage import MgMessage
 from Util import Util
