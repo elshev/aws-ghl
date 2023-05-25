@@ -77,7 +77,6 @@ class MgClient:
 
 
     def get_raw_events(self, begin_date, end_date=None, filter_event_type=MgEventType.ACCEPTED, limit=DEFAULT_LIMIT):
-        self._logger.info('get_raw_events(): Start Date = %s, End Date = %s', begin_date, end_date)
         begin_timestamp = MgClient._get_timestamp(begin_date)
 
         request_body = {
@@ -86,9 +85,14 @@ class MgClient:
             'ascending': 'yes',
             'limit': limit
         }
-        if end_date:
-            end_timestamp = MgClient._get_timestamp(end_date)
-            request_body['end'] = end_timestamp
+
+        if not end_date:
+            end_date = begin_date + timedelta(days=1)
+        if end_date < begin_date:
+            raise ValueError(f'get_raw_event(): end_date has to be greater than begin_date (begin_date = "{begin_date}", end_date = "{end_date}")')
+        end_timestamp = MgClient._get_timestamp(end_date)
+        request_body['end'] = end_timestamp
+        self._logger.info('get_raw_events(): Start Date = %s, End Date = %s', begin_date, end_date)
 
         body = urlencode(request_body)
         url = f'{self._mg_domain_url}/events?{body}'

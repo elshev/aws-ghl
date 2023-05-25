@@ -21,11 +21,7 @@ def get_raw_events(url=None, begin_date=None, end_date=None):
         result = mg_client.get_raw_events_from_url(url=url)
     else:
         if not begin_date:
-            begin_date = datetime.utcnow().date() + timedelta(days=-1)
-        if not end_date:
-            end_date = datetime.utcnow().date() + timedelta(days=1)
-        if end_date < begin_date:
-            raise ValueError(f'get_raw_event(): end_date has to be greater than begin_date (begin_date = "{begin_date}", end_date = "{end_date}")')
+            begin_date = AppConfig.get_mailgun_processed_datetime()
 
         result = mg_client.get_raw_events(begin_date=begin_date, end_date=end_date, limit=100)
 
@@ -68,7 +64,8 @@ def handler(event, context):
         end_date_str = event.get('end_date')
         if end_date_str:
             end_date = datetime.fromisoformat(end_date_str)
-    logging.info('Trying to get raw events from Mailgun. begin_date = %s, end_date = %s', begin_date, end_date)
+        logging.info('Trying to get raw events from Mailgun. begin_date = %s, end_date = %s', begin_date, end_date)
+    
     raw_events = get_raw_events(begin_date=begin_date, end_date=end_date)
     
     while True:

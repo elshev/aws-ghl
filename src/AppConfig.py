@@ -1,4 +1,8 @@
 import os
+from datetime import (
+    datetime,
+    timedelta
+)
 
 from AwsSsmClient import AwsSsmClient
 
@@ -58,6 +62,20 @@ class AppConfig:
     def get_mailgun_api_key():
         mailgun_api_key_param_name = f'{AppConfig.get_ssm_base_path()}/MailGunApiKey'
         return AwsSsmClient.get_parameter('MAILGUN_API_KEY', mailgun_api_key_param_name)
+
+    @staticmethod
+    def get_mailgun_processed_datetime():
+        mailgun_processed_timestamp_param_name = f'{AppConfig.get_ssm_base_path()}/MailGunProcessedTimestamp'
+        result = None
+        isotime = os.environ.get('MAILGUN_PROCESSED_ISOTIME')
+        if (isotime):
+            return datetime.fromisoformat(isotime)
+        ts = AwsSsmClient.get_parameter('MAILGUN_PROCESSED_TIMESTAMP', mailgun_processed_timestamp_param_name)
+        if ts:
+            return datetime.fromtimestamp(ts)
+        # if there is no starting date to process MailGun events, return one day before
+        return datetime.utcnow().date() + timedelta(days=-1)
+
 
     @staticmethod
     def get_temp_folder_path():
