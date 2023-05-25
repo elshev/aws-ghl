@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 import boto3
 
@@ -86,9 +86,9 @@ class AwsSsmClient:
         return self.get_parameter('MAILGUN_API_KEY', 'MailGunApiKey')
     
     def get_mailgun_processed_datetime(self):
-        ts = self.get_parameter('MAILGUN_PROCESSED_ISOTIME', AwsSsmClient.MAILGUN_PROCESSED_ISOTIME_PARAM_NAME)
-        if ts:
-            return datetime.fromtimestamp(ts)
+        isotime = self.get_parameter('MAILGUN_PROCESSED_ISOTIME', AwsSsmClient.MAILGUN_PROCESSED_ISOTIME_PARAM_NAME)
+        if isotime:
+            return datetime.fromisoformat(isotime)
         # if there is no starting date to process MailGun events, return yesterday
         return datetime.utcnow().date() + datetime.timedelta(days=-1)
 
