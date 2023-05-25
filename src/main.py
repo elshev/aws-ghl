@@ -147,8 +147,8 @@ def main():
     
     # mg_process_mailgun_events_queue.handler(event={}, context=None)
 
-    ghl_hook.handler(outboundSmsBody, None)
-    # ghl_refresh_token.handler({}, None)
+    # ghl_hook.handler(outboundSmsBody, None)
+    ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')
 

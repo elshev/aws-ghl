@@ -14,7 +14,7 @@ class GhlBaseRepository:
 
 
     def get_access_token(self):
-        return AppConfig.get_ghl_access_token()
+        return self._ssm_client.get_ghl_access_token()
 
 
     def ghl_request(self, path):

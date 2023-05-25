@@ -9,6 +9,7 @@ from typing import Iterable
 from urllib.parse import urlencode
 import urllib3
 from AppConfig import AppConfig
+from AwsSsmClient import AwsSsmClient
 from MgEvent import MgEvent
 from MgMessage import MgMessage
 
@@ -23,10 +24,11 @@ class MgClient:
 
     def __init__(self) -> None:
         self._logger = logging.getLogger()
+        self._ssm_client = AwsSsmClient()
         self._mg_base_url = AppConfig.get_mailgun_api_url()
         self._mg_domain = AppConfig.get_mailgun_domain()
         self._mg_domain_url = f'{self._mg_base_url}/{self._mg_domain}'
-        self._mg_api_key = AppConfig.get_mailgun_api_key()
+        self._mg_api_key = self._ssm_client.get_mailgun_api_key()
 
     def _get_timestamp(dt):
         result_date = dt

@@ -21,7 +21,7 @@ def get_raw_events(url=None, begin_date=None, end_date=None):
         result = mg_client.get_raw_events_from_url(url=url)
     else:
         if not begin_date:
-            begin_date = AppConfig.get_mailgun_processed_datetime()
+            begin_date = AwsSqsClient().get_mailgun_processed_datetime()
 
         result = mg_client.get_raw_events(begin_date=begin_date, end_date=end_date, limit=100)
 

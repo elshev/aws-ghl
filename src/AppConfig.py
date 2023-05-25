@@ -4,8 +4,6 @@ from datetime import (
     timedelta
 )
 
-from AwsSsmClient import AwsSsmClient
-
 class AppConfig:
 
     @staticmethod
@@ -33,16 +31,6 @@ class AppConfig:
         return 'https://services.leadconnectorhq.com'
 
     @staticmethod
-    def get_ghl_access_token_ssm_path():
-        return f'{AppConfig.get_ssm_base_path()}/AccessToken'
-
-    @staticmethod
-    def get_ghl_access_token():
-        access_token_param_name = AppConfig.get_ghl_access_token_ssm_path()
-        return AwsSsmClient.get_parameter('GHL_ACCESS_TOKEN', access_token_param_name)
-   
-    
-    @staticmethod
     def get_aws_bucket_name():
         return os.environ['GHL_BUCKET_NAME']
 
@@ -57,24 +45,6 @@ class AppConfig:
     @staticmethod
     def get_mailgun_domain():
         return os.environ['MAILGUN_DOMAIN']
-
-    @staticmethod
-    def get_mailgun_api_key():
-        mailgun_api_key_param_name = f'{AppConfig.get_ssm_base_path()}/MailGunApiKey'
-        return AwsSsmClient.get_parameter('MAILGUN_API_KEY', mailgun_api_key_param_name)
-
-    @staticmethod
-    def get_mailgun_processed_datetime():
-        mailgun_processed_timestamp_param_name = f'{AppConfig.get_ssm_base_path()}/MailGunProcessedTimestamp'
-        result = None
-        isotime = os.environ.get('MAILGUN_PROCESSED_ISOTIME')
-        if (isotime):
-            return datetime.fromisoformat(isotime)
-        ts = AwsSsmClient.get_parameter('MAILGUN_PROCESSED_TIMESTAMP', mailgun_processed_timestamp_param_name)
-        if ts:
-            return datetime.fromtimestamp(ts)
-        # if there is no starting date to process MailGun events, return one day before
-        return datetime.utcnow().date() + timedelta(days=-1)
 
 
     @staticmethod
