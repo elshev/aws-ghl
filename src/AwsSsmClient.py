@@ -1,4 +1,7 @@
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta
+)
 import os
 import boto3
 
@@ -101,7 +104,7 @@ class AwsSsmClient:
         if isotime:
             return datetime.fromisoformat(isotime)
         # if there is no starting date to process MailGun events, return yesterday
-        return datetime.utcnow().date() + datetime.timedelta(days=-1)
+        return datetime.utcnow().date() + timedelta(days=-1)
 
     def set_mailgun_processed_datetime(self, value: datetime):
         if not AppConfig.is_local_execution():
