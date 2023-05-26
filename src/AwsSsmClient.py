@@ -107,5 +107,6 @@ class AwsSsmClient:
         return datetime.utcnow().date() + timedelta(days=-1)
 
     def set_mailgun_processed_datetime(self, value: datetime):
-        if not AppConfig.is_local_execution():
-            self._update_ssm_string_parameter(AwsSsmClient.MAILGUN_PROCESSED_ISOTIME_PARAM_NAME, value.isoformat())
+        if value > datetime.utcnow():
+            raise ValueError('MailGun Processed datetime cant be greater than current time')
+        self._update_ssm_string_parameter(AwsSsmClient.MAILGUN_PROCESSED_ISOTIME_PARAM_NAME, value.isoformat())
