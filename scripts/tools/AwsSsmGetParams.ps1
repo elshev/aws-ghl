@@ -18,6 +18,7 @@ $ghlAccountKey = $json.GhlAccountKey;
 $ghlSubaccountKey = $json.ghlSubaccountKey;
 
 $ssmStoreParameterPath = "/${stage}-ghl-${ghlAccountKey}-${ghlSubaccountKey}"
+Write-Output "SSM Base Path = ${ssmStoreParameterPath}"
 
 function PrintSsmValue($name) {
     $path = "${ssmStoreParameterPath}/$name"
@@ -27,6 +28,11 @@ function PrintSsmValue($name) {
         --profile $awsProfileName `
     | ConvertFrom-Json -AsHashtable;
     
+    if (!$hashTable || !$hashTable.Parameter) {
+        Write-Output "'${name}' doesn't exist in SSM Parameter Store"
+        return
+    }
+
     $value = $hashTable.Parameter['Value'];
     Write-Output "${name}: ${value}"
 }
@@ -38,3 +44,4 @@ PrintSsmValue 'RefreshToken';
 PrintSsmValue 'ClientId';
 PrintSsmValue 'ClientSecret';
 PrintSsmValue 'MailGunApiKey';
+PrintSsmValue 'MailGunProcessedIsoTime';

@@ -18,9 +18,8 @@ class AwsS3Client:
     _aws_account_id = ''
     
     # Optimization variable to avoid redundant calls to AWS to check if the bucket exists
-    _bucket_exists_cache = None
+    _bucket_name_cache = None
 
-    
     @property
     def aws_account_id(self):
         if not AwsS3Client._aws_account_id:
@@ -59,10 +58,6 @@ class AwsS3Client:
         return file_path
 
     
-    @staticmethod
-    def get_bucket_name():
-        return AppConfig.get_aws_bucket_name()
-    
     def is_bucket_exists(self, bucket_name):
         s3_resource = boto3.resource("s3")
         bucket_resource = s3_resource.Bucket(bucket_name)
@@ -83,10 +78,11 @@ class AwsS3Client:
             str: Bucket Name.
         """
         # try to get a bucket name from cache first
-        bucket_name = AwsS3Client.get_bucket_name()
+        bucket_name = AwsS3Client._bucket_name_cache
         #         
-        if not AwsS3Client._bucket_exists_cache:
+        if not bucket_name:
             # Create a bucket in S3 if it doesn't exist
+            bucket_name = AppConfig.get_aws_bucket_name()
             if not self.is_bucket_exists(bucket_name):
                 create_bucket_configuration = {}
                 aws_region = AppConfig.get_aws_region()
@@ -102,14 +98,15 @@ class AwsS3Client:
                     self._s3_client.create_bucket(Bucket=bucket_name)
                 AwsS3Client.logger.info("Bucket '%s' was created.", bucket_name)
             
-            AwsS3Client._bucket_exists_cache = True
+            AwsS3Client._bucket_name_cache = bucket_name
 
         return bucket_name
 
     
     def is_object_exits(self, object_key):
+        bucket_name = self.check_bucket()
         response = self._s3_client.list_objects_v2(
-            Bucket=AwsS3Client.get_bucket_name(),
+            Bucket=bucket_name,
             Prefix=object_key,
             MaxKeys=1
         )
