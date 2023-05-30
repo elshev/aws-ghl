@@ -4,10 +4,10 @@ from GhlOutboundMessage import GhlOutboundMessage
 
 outboundMessageBody = {
     "type": "OutboundMessage",
-    "locationId": "dFUlfpB0VzwguRGR3IB3",
-    "contactId": "yQt7wzy5pVDbds94pEpq",
-    "conversationId": "jnHaVcGxKq6OEkIJDd6q",
-    "userId": "8tMrecTfd0N6egSO3bYT",
+    "locationId": "Location123",
+    "contactId": "Contact123",
+    "conversationId": "Conversation123",
+    "userId": "User123",
     "messageType": "SMS",
     "direction": "outbound",
     "contentType": "text/plain",
