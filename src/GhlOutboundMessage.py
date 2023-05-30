@@ -70,7 +70,7 @@ class GhlOutboundMessage:
         if not GhlOutboundMessage.is_outbound_message(event):
             return False
         event_type = str(event.get('messageType'))
-        return event_type == 'SMS'
+        return event_type == GhlMessageType.SMS
 
 
     @property

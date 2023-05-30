@@ -75,10 +75,11 @@ class GoHighLevelStack(Stack):
             'SQS_QUEUE_PREFIX': sqs_queue_prefix,
             'SQS_MAILGUN_EVENTS_QUEUE_NAME': SQS_MAILGUN_EVENTS_QUEUE_NAME
         }
+        env_vars_json = json.dumps(env_vars, indent=4)
 
         print(f'Account ID = {account_id}')
         print(f'Region = {aws_region}')
-        print(f'Added Env vars:\n{json.dumps(env_vars, indent=4)}')
+        print(f'Added Env vars:\n{env_vars_json}')
         
         
         # Create IAM role for Lambda functions
@@ -362,4 +363,25 @@ class GoHighLevelStack(Stack):
             id='MailGunQueueEventsUrl',
             value=mailgun_events_queue.queue_url,
             description='MailGun Events Queue URL'
+        )
+
+        CfnOutput(
+            self, 
+            id='SmsBasePath',
+            value=ssm_base_path,
+            description='SSM Parameter Store base path'
+        )
+
+        CfnOutput(
+            self, 
+            id='SqsQueuePrefix',
+            value=sqs_queue_prefix,
+            description='SQS Queue prefix for all queues'
+        )
+
+        CfnOutput(
+            self, 
+            id='EnvVars',
+            value=env_vars_json,
+            description='Environment variables added'
         )
