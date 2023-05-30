@@ -25,23 +25,13 @@ def get_body_from_event(event):
     return body
 
 
-def process_outbound_sms(outbound_sms: GhlOutboundMessage):
-    if outbound_sms.message_type != GhlMessageType.SMS:
-        raise ValueError('The current message type "%s" does not equal to "%s".', outbound_sms.message_type, GhlMessageType.SMS)
+def get_outbound_sms(body):
+    if not GhlOutboundMessage.is_outbound_sms_message(body):
+        logger.info('Warning! The current message type does not equal to "%s".', GhlMessageType.SMS)
+        return None
 
+    outbound_sms = GhlOutboundMessage.from_dict(body)
     return outbound_sms
-
-
-def process_outbound_message(body):
-    outbound_message = GhlOutboundMessage.from_dict(body)
-    if not outbound_message:
-        return None
-    if outbound_message.message_type != GhlMessageType.SMS:
-        logger.info('The current message type ("%s") is not currently processed by this function. Exiting...', outbound_message.message_type)
-        return None
-    
-    result = process_outbound_sms(outbound_message)
-    return result
 
 
 def handler(event, context):
@@ -54,13 +44,10 @@ def handler(event, context):
     event_type = body.get('type')
     if not event_type:
         logger.info('"type" key was not found in event. Exiting...')
+        return
  
-    
-    outbound_sms = None
-    if GhlOutboundMessage.is_outbound_message(body):
-        outbound_sms = process_outbound_message(body)
-    else:
-        logger.info('Event type = "%s" is not processed by this function. Exiting...', event_type)
+    outbound_sms = get_outbound_sms(body)
+    if not outbound_sms:
         return
 
     ghl_contact_repository = GhlContactRepository()

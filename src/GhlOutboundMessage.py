@@ -65,6 +65,14 @@ class GhlOutboundMessage:
         event_type = str(event.get('type'))
         return event_type == 'OutboundMessage'
 
+    @staticmethod
+    def is_outbound_sms_message(event: Any):
+        if not GhlOutboundMessage.is_outbound_message(event):
+            return False
+        event_type = str(event.get('messageType'))
+        return event_type == 'SMS'
+
+
     @property
     def first_name(self):
         return self.contact.first_name if self.contact else None
