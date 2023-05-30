@@ -35,9 +35,20 @@ def push_events_to_queue(raw_events: dict):
         logging.info('Raw Events do not contain "items". Nothing to send to SQS. raw_events:\n%s', raw_events)
         return False
     
-    logging.info('Sending events to SQS Queue. Message Body:\n%s', items)
+    # MailGun returns 2 'accepted' events.
+    # Remove one of them
+    filtered_items = []
+    for item in items:
+        recipient = item.get('recipient')
+        if not recipient:
+            continue
+        if recipient.startswith('https://') or '/inbound_webhook' in recipient:
+            continue
+        filtered_items.append(item)
+        
+    logging.info('Sending events to SQS Queue. Message Body:\n%s', filtered_items)
     sqs_client = AwsSqsClient()
-    sqs_client.send_to_mailgun_events_queue(items)
+    sqs_client.send_to_mailgun_events_queue(filtered_items)
 
     return True
 

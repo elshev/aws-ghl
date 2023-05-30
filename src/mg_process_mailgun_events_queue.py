@@ -23,9 +23,6 @@ def handler(event, context):
         message = sqs_response['Messages'][0]
         receipt_handle = message['ReceiptHandle']
         raw_events = message.get('Body')
-        if not raw_events:
-            raw_events = message.get('body')
-            
     
     if not raw_events:
         logging.info('Messages were not found in SQS. Exiting...')
