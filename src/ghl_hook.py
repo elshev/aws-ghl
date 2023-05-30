@@ -4,10 +4,8 @@ from AwsS3Client import AwsS3Client
 from GhlContactRepository import GhlContactRepository
 from GhlConversationRepository import GhlConversationRepository
 from GhlConversationUnreadUpdate import GhlConversationUnreadUpdate
-from GhlOutboundMessage import (
-    GhlMessageType, 
-    GhlOutboundMessage
-)
+from GhlOutboundMessage import GhlOutboundMessage
+from GhlBaseMessage import GhlMessageType
 from Util import Util
 
 

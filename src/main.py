@@ -63,6 +63,19 @@ contactCreateBody = {
     'lastName': 'Testoff'
 }
 
+inboundSmsBody = {
+  "type": "InboundMessage",
+  "locationId": "dFUlfpB0VzwguRGR3IB3",
+  "attachments": [],
+  "body": "Test Inbound SMS from local",
+  "contactId": "yQt7wzy5pVDbds94pEpq",
+  "contentType": "text/plain",
+  "conversationId": "jnHaVcGxKq6OEkIJDd6q",
+  "dateAdded": "2021-04-21T11:31:45.750Z",
+  "direction": "inbound",
+  "messageType": "SMS"
+}
+
 outboundSmsBody = {
     "type": "OutboundMessage",
     "locationId": "dFUlfpB0VzwguRGR3IB3",

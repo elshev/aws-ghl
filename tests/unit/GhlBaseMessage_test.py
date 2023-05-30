@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from GhlOutboundMessage import GhlOutboundMessage
+import pytest
+from GhlBaseMessage import GhlBaseMessage
 
 outboundMessageBody = {
     "type": "OutboundMessage",
@@ -17,6 +18,28 @@ outboundMessageBody = {
 }
 
 
+class TestIsOutboundMessage():
+    """
+    Tests the is_outbound_message() method
+    """
+
+    def test_returns_proper_result(self):
+        """
+        Tests that the is_outbound_message() function returns True for OutboundMessage objects and false for others
+        For brevity sake, many tests are joined into one
+        """
+        # Arrange
+        # Act
+        # Assert
+        assert GhlBaseMessage.is_outbound_message(None) is False
+        assert GhlBaseMessage.is_outbound_message(10) is False
+        assert GhlBaseMessage.is_outbound_message({}) is False
+        assert GhlBaseMessage.is_outbound_message({'typ': 'OutboundMessage'}) is False
+        assert GhlBaseMessage.is_outbound_message(outboundMessageBody) is True
+        assert GhlBaseMessage.is_outbound_message({'type': 'OutboundMessage'}) is True
+        assert GhlBaseMessage.is_outbound_message({'firstKey': 'SomeValue', 'type': 'OutboundMessage'}) is True
+
+
 class TestFromDict():
     """
     Tests the from_dict() method
@@ -29,7 +52,7 @@ class TestFromDict():
         # Arrange
         
         # Act
-        ghl_outbound_message = GhlOutboundMessage.from_dict(outboundMessageBody)
+        ghl_outbound_message = GhlBaseMessage.from_dict(outboundMessageBody)
         
         # Assert
         assert ghl_outbound_message.type == 'OutboundMessage'
@@ -46,29 +69,23 @@ class TestFromDict():
         assert ghl_outbound_message.date_added == date_added
 
 
-class TestToDict():
-    """
-    Tests the to_dict() method
-    """
-
-    def test_returns_object(self):
+    def test_wrong_datetime(self):
         """
         Tests that the from_dict() method returns a proper object with all fields
         """
         # Arrange
-        ghl_outbound_message = GhlOutboundMessage.from_dict(outboundMessageBody)
+        body_with_wrong_date = outboundMessageBody.copy()
         
         # Act
-        dic = ghl_outbound_message.to_dict()
-        
         # Assert
-        assert ghl_outbound_message.type == dic['type']
-        assert ghl_outbound_message.location_id == dic['locationId']
-        assert ghl_outbound_message.contact_id == dic['contactId']
-        assert ghl_outbound_message.content_type == dic['contentType']
-        assert ghl_outbound_message.conversation_id == dic['conversationId']
-        assert ghl_outbound_message.user_id == dic['userId']
-        assert ghl_outbound_message.direction == dic['direction']
-        assert ghl_outbound_message.message_type == dic['messageType']
-        assert ghl_outbound_message.body == dic['body']
-        assert ghl_outbound_message.date_added == datetime.fromisoformat(dic['dateAdded'])
+        body_with_wrong_date['dateAdded'] = 'abcdef'
+        with pytest.raises(ValueError, match='Invalid isoformat string'):
+            GhlBaseMessage.from_dict(body_with_wrong_date)
+
+        body_with_wrong_date['dateAdded'] = '2023-15-02T06:51:16.000Z'
+        with pytest.raises(ValueError, match='month must be in'):
+            GhlBaseMessage.from_dict(body_with_wrong_date)
+        
+        body_with_wrong_date['dateAdded'] = '2023-05-00T06:51:16.000Z'
+        with pytest.raises(ValueError, match='day is out of range for month'):
+            GhlBaseMessage.from_dict(body_with_wrong_date)

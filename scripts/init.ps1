@@ -4,7 +4,7 @@ Param(
     [Parameter(Mandatory=$True)][String] $configFile
 )
  
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop";
 
 $awsProfileName = 'default';
 
@@ -16,7 +16,7 @@ $accessToken = '';
 $refreshToken = '';
 # MailGun
 $mailgunApiKey = '';
-
+$mailGunProcessedIsoTime = ''; # e.g. '2023-05-30T09:53:19.803473';
 
 # Read settings from config file
 $json = Get-Content $configFile | Out-String | ConvertFrom-Json
@@ -50,3 +50,4 @@ PutParameter -name 'ClientId' -value ${clientId} -type 'SecureString';
 PutParameter -name 'ClientSecret' -value ${clientSecret} -type 'SecureString';
 
 PutParameter -name 'MailGunApiKey' -value ${mailgunApiKey} -type 'SecureString';
+PutParameter -name 'MailGunProcessedIsoTime' -value ${mailGunProcessedIsoTime} -type 'String';

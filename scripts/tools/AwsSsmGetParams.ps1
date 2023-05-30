@@ -39,9 +39,9 @@ function PrintSsmValue($name) {
 
 
 # Get GoHighLevel parameters. See: https://highlevel.stoplight.io/docs/integrations/6d8a9d06190b0-fa-qs
+PrintSsmValue 'MailGunProcessedIsoTime';
 PrintSsmValue 'AccessToken';
 PrintSsmValue 'RefreshToken';
-PrintSsmValue 'ClientId';
-PrintSsmValue 'ClientSecret';
-PrintSsmValue 'MailGunApiKey';
-PrintSsmValue 'MailGunProcessedIsoTime';
+# PrintSsmValue 'ClientId';
+# PrintSsmValue 'ClientSecret';
+# PrintSsmValue 'MailGunApiKey';
