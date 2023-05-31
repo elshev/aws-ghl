@@ -21,6 +21,9 @@ class AwsS3Client:
     # Optimization variable to avoid redundant calls to AWS to check if the bucket exists
     _bucket_name_cache = None
 
+    # Optimization dict of existing objects in S3 to avoid redundant calls to S3
+    _object_exist_cache = {}
+
     @property
     def aws_account_id(self):
         if not AwsS3Client._aws_account_id:
@@ -104,7 +107,11 @@ class AwsS3Client:
         return bucket_name
 
     
+    
     def is_object_exits(self, object_key):
+        if object_key in AwsS3Client._object_exist_cache:
+            logging.debug('Object key "%s" was found in local cache with value "exists" = "%s"', object_key, AwsS3Client._object_exist_cache[object_key])
+            return AwsS3Client._object_exist_cache[object_key]
         bucket_name = self.check_bucket()
         response = self._s3_client.list_objects_v2(
             Bucket=bucket_name,
@@ -117,7 +124,9 @@ class AwsS3Client:
             return False
         if not 'Key' in response['Contents'][0]:
             return False
-        return response['Contents'][0]['Key'] == object_key
+        exists = response['Contents'][0]['Key'] == object_key
+        AwsS3Client._object_exist_cache[object_key] = exists
+        return exists
 
     
     @staticmethod
@@ -142,6 +151,7 @@ class AwsS3Client:
         finally:
             if remove_file_after_upload:
                 AwsS3Client.remove_tmp_file(tmp_file_path)
+        AwsS3Client._object_exist_cache[object_key] = True
         AwsS3Client.logger.info('Successfully saved object to %s', s3_path)
         AwsS3Client.logger.info('Response: %s', response)
         return False
@@ -193,5 +203,9 @@ class AwsS3Client:
 
     def upload_sms(self, ghl_message: GhlBaseMessage):
         object_key = AwsS3Client.get_object_key_from_outbound_message(ghl_message)
+        if self.is_object_exits(object_key):
+            bucket_name = self.check_bucket()
+            AwsS3Client.logger.info('SMS Object "%s" already exists in S3 bucket "%s". Skip saving it.', object_key, bucket_name)
+            return True
         tmp_file_path = AwsS3Client.save_ghlmessage_as_sms(ghl_message)
         return self.upload_file_to_s3(object_key, tmp_file_path)

@@ -179,15 +179,15 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    process_mailgun_events()
+    # process_mailgun_events()
 
-    sleep_seconds = 3
-    logging.info('Sleeping for %s seconds', sleep_seconds)
-    time.sleep(sleep_seconds)
+    # sleep_seconds = 3
+    # logging.info('Sleeping for %s seconds', sleep_seconds)
+    # time.sleep(sleep_seconds)
     
-    process_mailgun_events_queue()
+    # process_mailgun_events_queue()
 
-    # ghl_hook.handler(inboundSmsBody, None)
+    ghl_hook.handler(inboundSmsBody, None)
     # ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')
