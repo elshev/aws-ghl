@@ -7,6 +7,7 @@ import http.client
 import time
 from AppConfig import AppConfig
 from AwsS3Client import AwsS3Client
+from AwsSqsClient import AwsSqsClient
 from AwsStsClient import AwsStsClient
 from GhlOutboundMessage import GhlOutboundMessage
 from MgClient import MgClient
@@ -111,7 +112,7 @@ ghlEvent = {
 }
 
 
-def get_messages(begin_date=None):
+def get_mailgun_messages(begin_date=None):
     if not begin_date:
         begin_date = datetime.utcnow().date()# + timedelta(days=-1)
     mg_client = MgClient()
@@ -126,7 +127,7 @@ def get_messages(begin_date=None):
         output_file.write(messages_json)
 
 
-def get_message_mime(message_url):
+def get_mailgun_message_mime(message_url):
     mg_client = MgClient()
     message: MgMessage = mg_client.get_mime_message(message_url=message_url)
     output_file_path = f'{LOG_DIR}/{datetime.now().strftime("%Y%m%d-%H%M%S")}-message.eml'
@@ -145,6 +146,28 @@ def process_mailgun_events():
     mg_process_mailgun_events.handler(event=event, context=None)
 
 
+def get_message_from_queue():
+    sqs_client = AwsSqsClient()
+    sqs_response = sqs_client.get_from_mailgun_events_queue()
+    messages = sqs_response.get('Messages')
+    if not messages:
+        return None
+    message = sqs_response['Messages'][0]
+    return message
+
+
+def process_mailgun_events_queue():
+    logging.info('Getting a message from the Queue...')
+    message = get_message_from_queue()
+    if not message:
+        logging.info('Messages were not found in SQS. Exiting...')
+        return
+    logging.info('Message was found in SQS response.')
+    event = { 'Records': [message] }
+
+    mg_process_mailgun_events_queue.handler(event=event, context=None)
+
+
 def main():
     setup_logging()
 
@@ -153,13 +176,13 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    process_mailgun_events()
+    # process_mailgun_events()
 
     # sleep_seconds = 3
     # logging.info('Sleeping for %s seconds', sleep_seconds)
     # time.sleep(sleep_seconds)
     
-    # mg_process_mailgun_events_queue.handler(event={}, context=None)
+    # process_mailgun_events_queue()
 
     # ghl_hook.handler(outboundSmsBody, None)
     # ghl_refresh_token.handler({}, None)
