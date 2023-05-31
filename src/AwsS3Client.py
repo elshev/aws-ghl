@@ -6,7 +6,7 @@ import boto3
 from botocore.exceptions import ClientError
 from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
-from GhlOutboundMessage import GhlOutboundMessage
+from GhlBaseMessage import GhlBaseMessage
 from MgMessage import MgMessage
 from Util import Util
 
@@ -175,13 +175,13 @@ class AwsS3Client:
 
     
     @staticmethod
-    def get_object_key_from_outbound_message(ghl_message: GhlOutboundMessage):
+    def get_object_key_from_outbound_message(ghl_message: GhlBaseMessage):
         dt = ghl_message.date_added
         folder_name = ghl_message.email.lower()
         return f'{folder_name}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}-sms.json'
 
 
-    def save_ghlmessage_as_sms(ghl_message: GhlOutboundMessage):
+    def save_ghlmessage_as_sms(ghl_message: GhlBaseMessage):
         output_file_name = f'{datetime.now().strftime("%Y%m%d-%H%M%S-%f")}-{ghl_message.conversation_id}.json'
         output_file_path = AppConfig.get_temp_file_path(output_file_name)
         logging.info(f'Dumpping SMS to the file: "{output_file_path}"')
@@ -191,7 +191,7 @@ class AwsS3Client:
         return output_file_path
         
 
-    def upload_outbound_sms(self, ghl_message: GhlOutboundMessage):
+    def upload_sms(self, ghl_message: GhlBaseMessage):
         object_key = AwsS3Client.get_object_key_from_outbound_message(ghl_message)
         tmp_file_path = AwsS3Client.save_ghlmessage_as_sms(ghl_message)
         return self.upload_file_to_s3(object_key, tmp_file_path)

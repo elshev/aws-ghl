@@ -4,8 +4,13 @@ from AwsS3Client import AwsS3Client
 from GhlContactRepository import GhlContactRepository
 from GhlConversationRepository import GhlConversationRepository
 from GhlConversationUnreadUpdate import GhlConversationUnreadUpdate
+from GhlBaseMessage import (
+    GhlBaseMessage,
+    GhlEventType,
+    GhlMessageType
+)
+from GhlInboundMessage import GhlInboundMessage
 from GhlOutboundMessage import GhlOutboundMessage
-from GhlBaseMessage import GhlMessageType
 from Util import Util
 
 
@@ -23,15 +28,6 @@ def get_body_from_event(event):
     return body
 
 
-def get_outbound_sms(body):
-    if not GhlOutboundMessage.is_outbound_sms_message(body):
-        logger.info('Warning! The current message type does not equal to "%s".', GhlMessageType.SMS)
-        return None
-
-    outbound_sms = GhlOutboundMessage.from_dict(body)
-    return outbound_sms
-
-
 def handler(event, context):
     Util.log_lambda_event(event, context)
         
@@ -44,16 +40,25 @@ def handler(event, context):
         logger.info('"type" key was not found in event. Exiting...')
         return
  
-    outbound_sms = get_outbound_sms(body)
-    if not outbound_sms:
-        return
+    if not GhlBaseMessage.is_sms(body):
+        logger.info('Warning! The current message type does not equal to "%s".', GhlMessageType.SMS)
+        return None
+
+    sms: GhlBaseMessage
+    if GhlBaseMessage.is_outbound_message(body):
+        sms = GhlOutboundMessage.from_dict(body)
+    else:
+        sms = GhlInboundMessage.from_dict(body)
+    if not sms:
+        logger.info('Warning! The current message type is not "%s" or "%s".', GhlEventType.INBOUND, GhlEventType.OUTBOUND)
+        return None
 
     ghl_contact_repository = GhlContactRepository()
-    ghl_contact = ghl_contact_repository.get_by_id(outbound_sms.contact_id)
-    outbound_sms.contact = ghl_contact
+    ghl_contact = ghl_contact_repository.get_by_id(sms.contact_id)
+    sms.contact = ghl_contact
     
     s3_client = AwsS3Client()
-    s3_client.upload_outbound_sms(outbound_sms)
+    s3_client.upload_sms(sms)
     
     
     # conversation_unread_update = ConversationUnreadUpdate.from_dict(body)
