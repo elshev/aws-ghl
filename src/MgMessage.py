@@ -102,4 +102,4 @@ class MgMessage:
 
     @property
     def is_reply_from_user(self):
-        return self.recipient_domain == AppConfig.get_mailgun_domain()
+        return self.mg_event.is_reply_from_user() if self.mg_event else None

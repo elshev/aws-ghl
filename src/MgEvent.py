@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from typing import Any, Iterable
 from dataclasses import dataclass
+from AppConfig import AppConfig
 
 from Util import Util
 
@@ -51,3 +52,8 @@ class MgEvent:
             message_url=_message_url,
             location_id=_location_id
         )
+    
+    @property
+    def is_reply_from_user(self):
+        return self.recipient_domain == AppConfig.get_mailgun_domain()
+

@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 from AppConfig import AppConfig
 from AwsStsClient import AwsStsClient
 from GhlBaseMessage import GhlBaseMessage
+from MgEvent import MgEvent
 from MgMessage import MgMessage
 from Util import Util
 
@@ -120,18 +121,12 @@ class AwsS3Client:
 
     
     @staticmethod
-    def get_object_key_from_contact(contact_id: str):
-        dt = datetime.now()
-        return f'{contact_id}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.json'
-
-    
-    @staticmethod
-    def get_object_key_from_mg_message(mg_message: MgMessage):
-        dt = datetime.fromtimestamp(mg_message.timestamp)
-        folder_name = mg_message.sender if mg_message.is_reply_from_user else mg_message.recipient
+    def get_object_key_from_mg_event(mg_event: MgEvent):
+        dt = datetime.fromtimestamp(mg_event.timestamp)
+        folder_name = mg_event.sender if mg_event.is_reply_from_user else mg_event.recipient
         return f'{folder_name}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.eml'
-    
-    
+
+
     def upload_file_to_s3(self, object_key, tmp_file_path, remove_file_after_upload=True):
         try:
             bucket_name = self.check_bucket()
@@ -152,6 +147,11 @@ class AwsS3Client:
         return False
 
     
+    @staticmethod
+    def get_object_key_from_contact(contact_id: str):
+        dt = datetime.now()
+        return f'{contact_id}/{dt:%Y-%m}/{dt:%Y%m%d-%H%M%S-%f}.json'
+
     def upload_conversation_to_s3(self, contact_id, data):
         object_key = AwsS3Client.get_object_key_from_contact(contact_id)
         tmp_file_path = AwsS3Client.data_to_tmp_file(data, object_key)
@@ -169,7 +169,7 @@ class AwsS3Client:
         
 
     def upload_mgmessage_to_s3(self, mg_message: MgMessage):
-        object_key = AwsS3Client.get_object_key_from_mg_message(mg_message)
+        object_key = AwsS3Client.get_object_key_from_mg_event(mg_message.mg_event)
         tmp_file_path = AwsS3Client.save_message_as_mime(mg_message)
         return self.upload_file_to_s3(object_key, tmp_file_path)
 

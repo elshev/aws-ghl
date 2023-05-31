@@ -72,7 +72,7 @@ inboundSmsBody = {
   "contactId": "yQt7wzy5pVDbds94pEpq",
   "contentType": "text/plain",
   "conversationId": "jnHaVcGxKq6OEkIJDd6q",
-  "dateAdded": "2021-04-21T11:31:45.750Z",
+  "dateAdded": "2023-05-31T11:31:45.750Z",
   "direction": "inbound",
   "messageType": "SMS"
 }
@@ -142,7 +142,10 @@ def process_mailgun_events():
         'begin_date': begin_date.isoformat(),
         'end_date': end_date.isoformat()
     }
-    event = {}
+    event = {
+        'begin_date': '2023-05-30T09:00:00',
+        'end_date': '2023-05-31T23:59:59'
+    }
     mg_process_mailgun_events.handler(event=event, context=None)
 
 
@@ -176,15 +179,15 @@ def main():
     directory = os.getcwd()
     logging.info('CWD = %s', directory)
 
-    # process_mailgun_events()
+    process_mailgun_events()
 
-    # sleep_seconds = 3
-    # logging.info('Sleeping for %s seconds', sleep_seconds)
-    # time.sleep(sleep_seconds)
+    sleep_seconds = 3
+    logging.info('Sleeping for %s seconds', sleep_seconds)
+    time.sleep(sleep_seconds)
     
-    # process_mailgun_events_queue()
+    process_mailgun_events_queue()
 
-    # ghl_hook.handler(outboundSmsBody, None)
+    # ghl_hook.handler(inboundSmsBody, None)
     # ghl_refresh_token.handler({}, None)
 
     logging.debug('FINISH!!!')

@@ -4,12 +4,11 @@ from typing import Iterable
 from AwsS3Client import AwsS3Client
 from AwsSqsClient import AwsSqsClient
 from MgClient import MgClient
+from MgEvent import MgEvent
 from Util import Util
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
 
 def handler(event, context):
     """Processes messages from SQS 'mailgun-events' queue
@@ -44,6 +43,11 @@ def handler(event, context):
         logging.info('Storing to S3 Bucket...')
         s3_client = AwsS3Client()
         for mg_event in mg_events:
+            object_key = AwsS3Client.get_object_key_from_mg_event(mg_event)
+            if s3_client.is_object_exits(object_key):
+                bucket_name = s3_client.check_bucket()
+                logging.info('MailGun message object "%s" already exists in S3 bucket "%s". Skip saving it.', object_key, bucket_name)
+                continue
             mg_message = mg_client.get_mime_message(mg_event)
             s3_client.upload_mgmessage_to_s3(mg_message)
         
