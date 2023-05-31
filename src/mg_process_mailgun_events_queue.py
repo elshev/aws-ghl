@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Iterable
 from AwsS3Client import AwsS3Client
 from AwsSqsClient import AwsSqsClient
 from MgClient import MgClient
@@ -7,6 +8,7 @@ from Util import Util
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 
 def handler(event, context):
@@ -28,14 +30,10 @@ def handler(event, context):
     sqs_client = AwsSqsClient()
     
     for record in records:
-        receipt_handle = record['ReceiptHandle']
-        # In case of direct request to SQS it uses 'Body'
-        # In case of calling Lambda via SQS trigger, 'body' is used
-        raw_events = record.get('Body')
-        if not raw_events:
-            raw_events = record.get('body')
-        if not raw_events:
-            raise ValueError('Record does not contain "Body" entry')
+        # In case of direct request to SQS it uses 'Body', 'ReceiptHandle', etc.
+        # In case of calling Lambda via SQS trigger, 'body', 'receiptHandle', etc. is used
+        receipt_handle = Util.get_dict_value_with_either_key(record, ['ReceiptHandle', 'receiptHandle'], raise_if_not_found=True)
+        raw_events = Util.get_dict_value_with_either_key(record, ['Body', 'body'], raise_if_not_found=True)
             
         # Convert raw events dict to a list of MgEvent
         logging.info('Processing events...')

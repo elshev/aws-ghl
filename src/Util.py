@@ -62,6 +62,18 @@ class Util:
 
 
     @staticmethod
+    def get_dict_value_with_either_key(dic: dict, keys: Iterable[str], raise_if_not_found=True):
+        for key in keys:
+            val = dic.get(key)
+            if val:
+                return val
+        if raise_if_not_found:
+            raise ValueError(f'Dictionary does not contain either of the next keys: "{keys}"')
+        return None
+
+
+
+    @staticmethod
     def write_file(file_path, content, newline=None):
         file_dir = os.path.dirname(file_path)
         if file_dir:

@@ -51,8 +51,10 @@ class TestMgEvent():
     def test_from_dict(self):
         # Arrange
         event = ACCEPTED_EVENT_01
+        
         # Act
         mg_event = MgEvent.from_dict(event)
+        
         #Assert
         assert mg_event.id == event['id']
         assert mg_event.timestamp == event['timestamp']
@@ -70,8 +72,10 @@ class TestMgEvent():
         event = ACCEPTED_EVENT_01
         event['timestamp'] = '123a'
         event['message']['size'] = '123.45'
+        
         # Act
         mg_event = MgEvent.from_dict(event)
+        
         #Assert
         assert mg_event.id == event['id']
         assert mg_event.timestamp is None
