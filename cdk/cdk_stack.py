@@ -16,6 +16,8 @@ from aws_cdk import (
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
     aws_sqs as sqs,
+    aws_cloudwatch as cloudwatch,
+    aws_cloudwatch_actions as cloudwatch_actions
 )
 import boto3
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
@@ -344,6 +346,20 @@ class GoHighLevelStack(Stack):
             max_batching_window=Duration.minutes(5),
             report_batch_item_failures=True
         ))
+
+
+        # Alarms
+        ghl_refresh_token_error_alarm = cloudwatch.Alarm(
+            self,
+            id='GhlRefreshTokenErrorAlarm',
+            alarm_name=f'GhlRefreshTokenErrors',
+            alarm_description=f'Alarm if the SUM of Errors is greater than or equal to the threshold (1) for 1 evaluation period in "ghl_refresh_token_function"',
+            metric=ghl_refresh_token_function.metric_errors(),
+            threshold=1,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            evaluation_periods=1
+        )
+        # ghl_refresh_token_error_alarm.add_alarm_action(cloudwatch_actions.SnsAction(topic))
 
         # Resource group
         app_resource_group = rg.CfnGroup(
