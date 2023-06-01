@@ -3,6 +3,7 @@ from constructs import Construct
 from aws_cdk import (
     CfnOutput,
     Duration,
+    RemovalPolicy,
     Stack,
     aws_iam as iam,
     aws_s3 as s3,
@@ -17,6 +18,7 @@ from aws_cdk import (
 )
 import boto3
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
+from aws_cdk.aws_s3 import ObjectLockMode
 
 class GoHighLevelStack(Stack):
 
@@ -30,16 +32,17 @@ class GoHighLevelStack(Stack):
     
     def __init__(self, scope: Construct, config_file_path: str, **kwargs) -> None:
         
-        config_json: dict = {}
+        config: dict = {}
         with open(config_file_path) as f:
-            config_json = json.load(f)
-        ghl_account_key = config_json['GhlAccountKey']
-        ghl_subaccount_key = config_json['GhlSubAccountKey']
-        stage = config_json.get('Stage', 'dev')
+            config = json.load(f)
+        ghl_account_key = config['GhlAccountKey']
+        ghl_subaccount_key = config['GhlSubAccountKey']
+        stage = config.get('Stage', 'dev')
         is_prod = stage == 'prod'
         stage_prefix = '' if is_prod else f'{stage}-'
         aws_unique_name = f'{stage_prefix}ghl-{ghl_account_key}-{ghl_subaccount_key}'
         construct_id = aws_unique_name
+        s3_bucket_config = config['S3Bucket']
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -47,8 +50,8 @@ class GoHighLevelStack(Stack):
         self._lambda_architecture = lambda_.Architecture.X86_64
 
         # Load other settings from config
-        mailgun_api_url = config_json.get('MailGunApiUrl', 'https://api.mailgun.net/v3')
-        mailgun_domain = config_json['MailGunDomain']
+        mailgun_api_url = config.get('MailGunApiUrl', 'https://api.mailgun.net/v3')
+        mailgun_domain = config['MailGunDomain']
 
         # S3 bucket name should be unique around the world 
         # but we don't know the AWS Account ID until the deployment
@@ -184,17 +187,44 @@ class GoHighLevelStack(Stack):
         ghl_lambda_role.add_to_policy(invoke_lambda_policy)
         ghl_lambda_role.add_to_policy(sqs_process_messages_policy)
 
+
         # Create Client S3 bucket
+        object_lock_retention = None
+        object_lock_mode = s3_bucket_config.get('ObjectLockMode')
+        print(f'ObjectLockMode = {object_lock_mode}')
+        if object_lock_mode:
+            # Retention Period: Use 'ObjectRetentionYears' if specified, otherwise use 'ObjectRetentionDays'
+            object_retention_years_str = s3_bucket_config.get('ObjectRetentionYears')
+            object_retention_days = 0
+            if object_retention_years_str and int(object_retention_years_str) > 0:
+                object_retention_days = int(object_retention_years_str) * 365
+            else:
+                object_retention_days = int(s3_bucket_config['ObjectRetentionDays'])
+            # Create Governance or Compliance Lock retention policy
+            if ObjectLockMode[object_lock_mode] == ObjectLockMode.GOVERNANCE:
+                object_lock_retention = s3.ObjectLockRetention.governance(Duration.days(object_retention_days))
+            elif ObjectLockMode[object_lock_mode] == ObjectLockMode.COMPLIANCE:
+                print(f'WARNING!!! The configuration specifies ObjectLockMode = "{object_lock_mode}". You will be not able remove object or bucket after creation!!!')
+                object_lock_retention = s3.ObjectLockRetention.compliance(Duration.days(object_retention_days))
+            else:
+                raise ValueError(f'ObjectLockMode has a wrong value = {object_lock_mode}')
         s3_bucket = s3.Bucket(
             self,
             id='GhlClientBucket',
-            bucket_name=s3_bucket_name
+            bucket_name=s3_bucket_name,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            enforce_ssl=False,
+            versioned=True,
+            removal_policy=RemovalPolicy.RETAIN,
+            object_lock_enabled=True,
+            object_lock_default_retention=object_lock_retention
         )
-
 
         # Create the Lambda function for refreshing Access and Refresh tokens
         ghl_refresh_token_function = lambda_.Function(
-            self, 'GhlRefreshTokenFunction',
+            self, 
+            id='GhlRefreshTokenFunction',
             code=lambda_.Code.from_asset('src'),
             handler='ghl_refresh_token.handler',
             runtime=self.python_runtime,
@@ -207,7 +237,8 @@ class GoHighLevelStack(Stack):
 
         # Add a schedule event to trigger the token refresh function
         refresh_token_schedule_rule = events.Rule(
-            self, 'GhlRefreshTokenSchedule',
+            self, 
+            id='GhlRefreshTokenSchedule',
             schedule=events.Schedule.rate(Duration.hours(23)),
             enabled=True,
             description='A schedule for getting new Access and Rerfresh Tokens from GoHighLevel'
@@ -217,7 +248,8 @@ class GoHighLevelStack(Stack):
 
         # Create the Lambda function as a WebHook for Conversation Unread event
         ghl_hook_function = lambda_.Function(
-            self, 'GhlHookFunction',
+            self, 
+            id='GhlHookFunction',
             code=lambda_.Code.from_asset('src'),
             handler='ghl_hook.handler',
             runtime=self.python_runtime,

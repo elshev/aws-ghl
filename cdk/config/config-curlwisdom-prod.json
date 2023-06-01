@@ -3,5 +3,10 @@
     "GhlSubAccountKey": "curlwisdom",
     "Stage": "prod",
     "MailGunApiUrl": "https://api.mailgun.net/v3",
-    "MailGunDomain": "send.dignamail.com"
+    "MailGunDomain": "send.dignamail.com",
+    "S3Bucket": {
+        "ObjectLockMode": "GOVERNANCE",
+        "ObjectRetentionYears": 6,
+        "ObjectRetentionDays": 0
+    }
 }
