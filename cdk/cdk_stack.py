@@ -5,6 +5,7 @@ from aws_cdk import (
     Duration,
     RemovalPolicy,
     Stack,
+    Tags,
     aws_iam as iam,
     aws_s3 as s3,
     aws_lambda as lambda_,
@@ -210,7 +211,7 @@ class GoHighLevelStack(Stack):
                 raise ValueError(f'ObjectLockMode has a wrong value = {object_lock_mode}')
         s3_bucket = s3.Bucket(
             self,
-            id='GhlClientBucket',
+            id='GhlSubAccountBucket',
             bucket_name=s3_bucket_name,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
@@ -344,7 +345,6 @@ class GoHighLevelStack(Stack):
             report_batch_item_failures=True
         ))
 
-
         # Resource group
         app_resource_group = rg.CfnGroup(
             self, 
@@ -359,6 +359,12 @@ class GoHighLevelStack(Stack):
             resource_group_name=app_resource_group.name,
             auto_configuration_enabled=True
         )
+
+        
+        # Tags
+        Tags.of(self).add("Account", ghl_account_key)
+        Tags.of(self).add("SubAccount", ghl_subaccount_key)
+        Tags.of(self).add("Stage", stage)
 
 
         # Outputs
