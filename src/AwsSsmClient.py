@@ -54,7 +54,7 @@ class AwsSsmClient:
     def _update_ssm_secure_string_parameter(self, name, value):
         self._update_ssm_parameter(name, value, 'SecureString')
 
-    def _get_parameter(self, env_name, ssm_parameter_name, use_cache=True):
+    def _get_parameter(self, env_name, ssm_parameter_name, use_cache=False):
         '''
         If 'env_name' exists in environment variables, returns its value
         Otherwise, goes to SSM Parameter Store and returns value for parameter with name = env_ssm_parameter_name
@@ -85,7 +85,7 @@ class AwsSsmClient:
         return self._update_ssm_secure_string_parameter(AwsSsmClient.REFRESH_TOKEN_PARAM_NAME, value)
 
     def get_ghl_access_token(self):
-        return self._get_parameter('GHL_ACCESS_TOKEN', AwsSsmClient.ACCESS_TOKEN_PARAM_NAME)
+        return self._get_parameter('GHL_ACCESS_TOKEN', AwsSsmClient.ACCESS_TOKEN_PARAM_NAME, use_cache=False)
 
     def set_ghl_access_token(self, value):
         return self._update_ssm_secure_string_parameter(AwsSsmClient.ACCESS_TOKEN_PARAM_NAME, value)
