@@ -15,6 +15,7 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_applicationinsights as appinsights,
     aws_resourcegroups as rg,
+    aws_sns as sns,
     aws_sqs as sqs,
     aws_cloudwatch as cloudwatch,
     aws_cloudwatch_actions as cloudwatch_actions
@@ -22,6 +23,7 @@ from aws_cdk import (
 import boto3
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
 from aws_cdk.aws_s3 import ObjectLockMode
+from aws_cdk.aws_sns_subscriptions import EmailSubscription
 
 class GoHighLevelStack(Stack):
 
@@ -46,6 +48,7 @@ class GoHighLevelStack(Stack):
         aws_unique_name = f'{stage_prefix}ghl-{ghl_account_key}-{ghl_subaccount_key}'
         construct_id = aws_unique_name
         s3_bucket_config = config['S3Bucket']
+        sns_config = config['Sns']
 
         super().__init__(scope, construct_id, **kwargs)
 
@@ -296,7 +299,7 @@ class GoHighLevelStack(Stack):
         mg_process_mailgun_events_schedule_rule = events.Rule(
             self,
             id='MgProcessMailgunEventsSchedule',
-            schedule=events.Schedule.rate(Duration.minutes(60)),
+            schedule=events.Schedule.rate(Duration.minutes(15)),
             enabled=True,
             description='A schedule for polling MailGun to get messages from there'
         )
@@ -349,31 +352,42 @@ class GoHighLevelStack(Stack):
 
 
         # Alarms
-        ghl_refresh_token_error_alarm = cloudwatch.Alarm(
-            self,
-            id='GhlRefreshTokenErrorAlarm',
-            alarm_name=f'GhlRefreshTokenErrors',
-            alarm_description=f'Alarm if the SUM of Errors is greater than or equal to the threshold (1) for 1 evaluation period in "ghl_refresh_token_function"',
-            metric=ghl_refresh_token_function.metric_errors(),
-            threshold=1,
-            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-            evaluation_periods=1
-        )
+        # ghl_refresh_token_error_alarm = cloudwatch.Alarm(
+        #     self,
+        #     id='GhlRefreshTokenErrorAlarm',
+        #     alarm_name=f'GhlRefreshTokenErrors',
+        #     alarm_description=f'Alarm if the SUM of Errors is greater than or equal to the threshold (1) for 1 evaluation period in "ghl_refresh_token_function"',
+        #     metric=ghl_refresh_token_function.metric_errors(),
+        #     threshold=1,
+        #     comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        #     evaluation_periods=1
+        # )
         # ghl_refresh_token_error_alarm.add_alarm_action(cloudwatch_actions.SnsAction(topic))
 
         # Resource group
         app_resource_group = rg.CfnGroup(
             self, 
             id='applicationResourceGroup',
-            name=f'{construct_id}-ApplicationInsights',
+            name=f'{construct_id}-insights',
         )
 
         # Application Insights monitoring
+        sns_alarms_topic = sns.Topic(
+            self,
+            id='SnsAlarmsTopic',
+            topic_name='f{construct_id}_alarms',
+            display_name='SNS topic for alarms from CloudWatch',
+        )
+        alarms_email = sns_config.get('AlarmsEmail')
+        if alarms_email:
+            sns_alarms_topic.add_subscription(EmailSubscription(alarms_email))
+
         appinsights.CfnApplication(
             self, 
             id='ApplicationInsightsMonitoring',
             resource_group_name=app_resource_group.name,
-            auto_configuration_enabled=True
+            auto_configuration_enabled=True,
+            ops_item_sns_topic_arn=sns_alarms_topic.topic_arn
         )
 
         

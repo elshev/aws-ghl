@@ -1,12 +1,15 @@
 {
     "GhlAccountKey": "dignava",
     "GhlSubAccountKey": "curlwisdom",
-    "Stage": "dev",
+    "Stage": "staging",
     "MailGunApiUrl": "https://api.mailgun.net/v3",
     "MailGunDomain": "send.dignamail.com",
     "S3Bucket": {
         "ObjectLockMode": "GOVERNANCE",
         "ObjectRetentionYears": 0,
         "ObjectRetentionDays": 7
+    },
+    "Sns": {
+        "AlarmsEmail": "alarms@example.com"
     }
 }
