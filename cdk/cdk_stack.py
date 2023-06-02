@@ -368,14 +368,14 @@ class GoHighLevelStack(Stack):
         app_resource_group = rg.CfnGroup(
             self, 
             id='applicationResourceGroup',
-            name=f'{construct_id}-insights',
+            name=f'{construct_id}-Insights',
         )
 
         # Application Insights monitoring
         sns_alarms_topic = sns.Topic(
             self,
             id='SnsAlarmsTopic',
-            topic_name='f{construct_id}_alarms',
+            topic_name=f'{construct_id}-Alarms',
             display_name='SNS topic for alarms from CloudWatch',
         )
         alarms_email = sns_config.get('AlarmsEmail')
@@ -387,6 +387,7 @@ class GoHighLevelStack(Stack):
             id='ApplicationInsightsMonitoring',
             resource_group_name=app_resource_group.name,
             auto_configuration_enabled=True,
+            ops_center_enabled=True,
             ops_item_sns_topic_arn=sns_alarms_topic.topic_arn
         )
 
