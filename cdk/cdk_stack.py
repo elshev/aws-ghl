@@ -367,8 +367,8 @@ class GoHighLevelStack(Stack):
         # Resource group
         app_resource_group = rg.CfnGroup(
             self, 
-            id='applicationResourceGroup',
-            name=f'{construct_id}-Insights',
+            id='appResourceGroup',
+            name=f'{construct_id}-insights',
         )
 
         # Application Insights monitoring
