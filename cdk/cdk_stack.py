@@ -34,6 +34,26 @@ class GoHighLevelStack(Stack):
     @property
     def lambda_architecture(self):
         return self._lambda_architecture
+
+    @staticmethod
+    def create_alarms_for_lambda(self, lambda_function: lambda_.Function, sns_topic: sns.Topic):
+        # Convert names like 'Dev-Ghl-Dignava-Curlwisdom/GhlHookFunction' to 'GhlHook'
+        name = lambda_function.to_string()
+        name = name.rpartition('/')[-1] or name
+        print(f'Creating alarm for "{name}"...')
+        # Create Alarms
+        alarm = cloudwatch.Alarm(
+            self,
+            id=f'{name}ErrorAlarm',
+            alarm_name=f'{name}Errors',
+            alarm_description=f'Alarm if the SUM of Errors is greater than or equal to the threshold (1) for 1 evaluation period in "{name}"',
+            metric=lambda_function.metric_errors(),
+            threshold=1,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+            evaluation_periods=1
+        )
+        alarm.add_alarm_action(cloudwatch_actions.SnsAction(sns_topic))
+
     
     def __init__(self, scope: Construct, config_file_path: str, **kwargs) -> None:
         
@@ -352,26 +372,6 @@ class GoHighLevelStack(Stack):
 
 
         # Alarms
-        # ghl_refresh_token_error_alarm = cloudwatch.Alarm(
-        #     self,
-        #     id='GhlRefreshTokenErrorAlarm',
-        #     alarm_name=f'GhlRefreshTokenErrors',
-        #     alarm_description=f'Alarm if the SUM of Errors is greater than or equal to the threshold (1) for 1 evaluation period in "ghl_refresh_token_function"',
-        #     metric=ghl_refresh_token_function.metric_errors(),
-        #     threshold=1,
-        #     comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        #     evaluation_periods=1
-        # )
-        # ghl_refresh_token_error_alarm.add_alarm_action(cloudwatch_actions.SnsAction(topic))
-
-        # Resource group
-        app_resource_group = rg.CfnGroup(
-            self, 
-            id='appResourceGroup',
-            name=f'{construct_id}-insights',
-        )
-
-        # Application Insights monitoring
         sns_alarms_topic = sns.Topic(
             self,
             id='SnsAlarmsTopic',
@@ -382,6 +382,20 @@ class GoHighLevelStack(Stack):
         if alarms_email:
             sns_alarms_topic.add_subscription(EmailSubscription(alarms_email))
 
+        GoHighLevelStack.create_alarms_for_lambda(self, ghl_refresh_token_function, sns_alarms_topic)
+        GoHighLevelStack.create_alarms_for_lambda(self, ghl_hook_function, sns_alarms_topic)
+        GoHighLevelStack.create_alarms_for_lambda(self, mg_process_mailgun_events_function, sns_alarms_topic)
+        GoHighLevelStack.create_alarms_for_lambda(self, mg_process_mailgun_events_queue_function, sns_alarms_topic)
+
+        
+        # Resource group
+        app_resource_group = rg.CfnGroup(
+            self, 
+            id='appResourceGroup',
+            name=f'{construct_id}-insights',
+        )
+
+        # Application Insights monitoring
         appinsights.CfnApplication(
             self, 
             id='ApplicationInsightsMonitoring',
