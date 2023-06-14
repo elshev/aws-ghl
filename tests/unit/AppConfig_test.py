@@ -13,7 +13,7 @@ class TestGetTempFolderPath:
         value = AppConfig.get_temp_folder_path()
         
         #Assert
-        assert value == TEMP_FOLDER
+        assert value == TEST_TEMP_FOLDER
 
 
     def test_when_env_is_not_set(self):
@@ -25,7 +25,7 @@ class TestGetTempFolderPath:
         value = AppConfig.get_temp_folder_path()
         
         #Assert
-        assert value == AppConfig.TEMP_FOLDER_DEFAULT
+        assert value == AppConfig.DEFAULT_TEMP_FOLDER
 
 
 class TestGetTempFilePath:
@@ -39,7 +39,7 @@ class TestGetTempFilePath:
         value = AppConfig.get_temp_file_path(file_path)
         
         #Assert
-        assert value == f'{TEMP_FOLDER}/{file_path}'
+        assert value == f'{TEST_TEMP_FOLDER}/{file_path}'
 
 
     def test_when_env_is_not_set(self):
@@ -52,4 +52,29 @@ class TestGetTempFilePath:
         value = AppConfig.get_temp_file_path(file_path)
         
         #Assert
-        assert value == f'{AppConfig.TEMP_FOLDER_DEFAULT}/{file_path}'
+        assert value == f'{AppConfig.DEFAULT_TEMP_FOLDER}/{file_path}'
+
+
+class TestGetStatics:
+
+    def test_get_aws_region(self):
+        # Arrange
+        TestUtil.set_envs()
+        
+        # Act
+        value = AppConfig.get_aws_region()
+        
+        #Assert
+        assert value == TEST_AWS_REGION
+
+    def test_get_aws_region_default(self):
+        # Arrange
+        TestUtil.set_envs()
+        os.environ.pop(AppConfig.ENV_AWS_REGION, None)
+        
+        # Act
+        value = AppConfig.get_aws_region()
+        
+        #Assert
+        assert value == AppConfig.DEFAULT_AWS_REGION
+

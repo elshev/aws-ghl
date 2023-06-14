@@ -4,10 +4,11 @@ class AppConfig:
     # Environment variable names
     ENV_AWS_LAMBDA_FUNCTION_NAME = 'AWS_LAMBDA_FUNCTION_NAME'
     ENV_TEMP_FOLDER = 'TEMP_FOLDER'
+    ENV_AWS_REGION = 'AWS_REGION'
     
     # Default values
-    TEMP_FOLDER_DEFAULT = '/tmp/ghl'
-
+    DEFAULT_TEMP_FOLDER = '/tmp/ghl'
+    DEFAULT_AWS_REGION = 'us-east-1'
 
     @staticmethod
     def is_local_execution():
@@ -39,7 +40,7 @@ class AppConfig:
 
     @staticmethod
     def get_aws_region():
-        return os.environ.get('AWS_REGION', 'us-east-1')
+        return os.environ.get(AppConfig.ENV_AWS_REGION, AppConfig.DEFAULT_AWS_REGION)
 
     @staticmethod
     def get_mailgun_api_url():
@@ -52,7 +53,7 @@ class AppConfig:
 
     @staticmethod
     def get_temp_folder_path():
-        return os.environ.get(AppConfig.ENV_TEMP_FOLDER, AppConfig.TEMP_FOLDER_DEFAULT)
+        return os.environ.get(AppConfig.ENV_TEMP_FOLDER, AppConfig.DEFAULT_TEMP_FOLDER)
 
 
     @staticmethod
