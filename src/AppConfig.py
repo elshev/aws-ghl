@@ -48,7 +48,7 @@ class AppConfig:
 
     @staticmethod
     def get_mailgun_api_url():
-        return os.environ.get(AppConfig.MAILGUN_API_URL, AppConfig.DEFAULT_MAILGUN_API_URL)
+        return os.environ.get(AppConfig.ENV_MAILGUN_API_URL, AppConfig.DEFAULT_MAILGUN_API_URL)
 
     @staticmethod
     def get_mailgun_domain():
@@ -62,6 +62,8 @@ class AppConfig:
 
     @staticmethod
     def get_temp_file_path(relative_file_path):
+        if not relative_file_path:
+            raise ValueError('"relative_file_path" is empty')
         tmp_folder_path = AppConfig.get_temp_folder_path()
         if not relative_file_path.startswith(f'{tmp_folder_path}/'):
             return f'{tmp_folder_path}/{relative_file_path}'
