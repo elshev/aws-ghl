@@ -1,14 +1,17 @@
 import os
-from datetime import (
-    datetime,
-    timedelta
-)
 
 class AppConfig:
+    # Environment variable names
+    ENV_AWS_LAMBDA_FUNCTION_NAME = 'AWS_LAMBDA_FUNCTION_NAME'
+    ENV_TEMP_FOLDER = 'TEMP_FOLDER'
+    
+    # Default values
+    TEMP_FOLDER_DEFAULT = '/tmp/ghl'
+
 
     @staticmethod
     def is_local_execution():
-        return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') is None
+        return os.environ.get(AppConfig.ENV_AWS_LAMBDA_FUNCTION_NAME) is None
     
     @staticmethod
     def is_aws_execution():
@@ -49,7 +52,7 @@ class AppConfig:
 
     @staticmethod
     def get_temp_folder_path():
-        return os.environ.get('TEMP_FOLDER', '/tmp/ghl')
+        return os.environ.get(AppConfig.ENV_TEMP_FOLDER, AppConfig.TEMP_FOLDER_DEFAULT)
 
 
     @staticmethod
