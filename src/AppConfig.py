@@ -5,10 +5,14 @@ class AppConfig:
     ENV_AWS_LAMBDA_FUNCTION_NAME = 'AWS_LAMBDA_FUNCTION_NAME'
     ENV_TEMP_FOLDER = 'TEMP_FOLDER'
     ENV_AWS_REGION = 'AWS_REGION'
+    ENV_SQS_MAILGUN_EVENTS_QUEUE_NAME = 'SQS_MAILGUN_EVENTS_QUEUE_NAME'
+    ENV_MAILGUN_API_URL = 'MAILGUN_API_URL'
     
     # Default values
     DEFAULT_TEMP_FOLDER = '/tmp/ghl'
     DEFAULT_AWS_REGION = 'us-east-1'
+    DEFAULT_SQS_MAILGUN_EVENTS_QUEUE_NAME = 'mailgun-events'
+    DEFAULT_MAILGUN_API_URL = 'https://api.mailgun.net/v3'
 
     @staticmethod
     def is_local_execution():
@@ -28,7 +32,7 @@ class AppConfig:
 
     @staticmethod
     def get_mailgun_events_queue_name():
-        return os.environ.get('SQS_MAILGUN_EVENTS_QUEUE_NAME', 'mailgun-events')
+        return os.environ.get(AppConfig.ENV_SQS_MAILGUN_EVENTS_QUEUE_NAME, AppConfig.DEFAULT_SQS_MAILGUN_EVENTS_QUEUE_NAME)
 
     @staticmethod
     def get_ghl_base_url():
@@ -44,7 +48,7 @@ class AppConfig:
 
     @staticmethod
     def get_mailgun_api_url():
-        return os.environ.get('MAILGUN_API_URL', 'https://api.mailgun.net/v3')
+        return os.environ.get(AppConfig.MAILGUN_API_URL, AppConfig.DEFAULT_MAILGUN_API_URL)
 
     @staticmethod
     def get_mailgun_domain():
